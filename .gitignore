@@ -1,0 +1,68 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Agent / IDE
+.claude/
+.vscode/
+.idea/
+*.swp
+
+# Vercel
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# ---------- backend (Python) ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# Virtualenv
+venv/
+.venv/
+env/
+ENV/
+
+# Test / lint cache
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local data (백엔드 한정 — web/src/data 같은 소스 폴더를 삼키지 않도록)
+backend/data/
+*.sqlite
+*.sqlite3
+*.db
+
+
+# ---------- web (Node / Next.js) ----------
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# ---------- mobile (Flutter) ----------
+# flutter create 가 mobile/.gitignore 를 따로 만든다. 여기엔 최소만.
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
