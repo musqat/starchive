@@ -3,4 +3,4 @@
 없을시 마이그레이션에 안 잡힘
 """
 
-# from app.domains.content import models as content_models   # noqa: F401
+from app.domains.content import models as content_models   # noqa: F401
