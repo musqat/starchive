@@ -8,6 +8,12 @@ from app.domains.content.models import ContentType
 POSTER_BASE = "https://image.tmdb.org/t/p/w500"
 
 
+def _director(data: dict) -> str | None:
+    """credits.crew 에서 감독만 추출, 공동 연출이면 쉼표로 구분"""
+    crew = data.get("credits", {}).get("crew", [])
+    return ", ".join(c["name"] for c in crew if c.get("job") == "Director") or None
+
+
 def normalize_movie(data: dict) -> dict:
     """TMDB /movie/{id} 응답을 Content 컬럼명 dict 로 변환."""
     poster = data.get("poster_path")
@@ -19,11 +25,11 @@ def normalize_movie(data: dict) -> dict:
         "type": ContentType.MOVIE,
         "title": data["title"],
         "genre": [g["name"] for g in data.get("genres", [])],
-        "description": overview or None,  # "" 는 줄거리 없음으로 취급 → 임베딩 제외
+        "description": overview or None,  # "" 는 줄거리 없음으로 취급
         "source": "TMDB",
         "external_id": str(data["id"]),
         "release_date": date.fromisoformat(released) if released else None,
-        "creator": None,  # 감독은 append_to_response=credits 가 필요.
+        "creator": _director(data),
         "image_url": f"{POSTER_BASE}{poster}" if poster else None,
         "external_rating": data.get("vote_average"),
         "external_rating_count": data.get("vote_count"),
