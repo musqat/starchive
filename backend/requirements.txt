@@ -1,2 +1,10 @@
 fastapi
 uvicorn[standard]
+sqlalchemy>=2.0
+psycopg[binary]
+pgvector
+pyjwt
+bcrypt
+httpx
+openai
+pydantic-settings
