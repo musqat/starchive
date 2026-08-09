@@ -1,3 +1,24 @@
+[project]
+name = "starchive-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]",
+    "pgvector",
+    "pyjwt",
+    "bcrypt",
+    "httpx",
+    "openai",
+    "pydantic-settings",
+]
+
+[dependency-groups]
+dev = ["pytest", "pytest-asyncio", "ruff", "alembic"]
+etl = ["pandas", "tenacity"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
@@ -9,6 +30,9 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+asyncio_mode = "auto"
 markers = [
     "db: 실제 DB 연결이 필요한 테스트",
+    "external: 외부 API 호출이 필요한 테스트",
 ]
+
