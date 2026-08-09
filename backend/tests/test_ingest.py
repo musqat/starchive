@@ -1,10 +1,11 @@
+from pathlib import Path
+
 import httpx
 import pytest
 
 from app.core.clients.tmdb import fetch_movie
 from app.ingestion.movielens import load_target_tmdb_ids
 from app.ingestion.normalizer import normalize_movie
-from pathlib import Path
 
 
 def test_load_ids():
@@ -31,6 +32,7 @@ async def test_fetch_and_normalize():
 @pytest.mark.db
 def test_contents_saved():
     from sqlalchemy import create_engine, text
+
     from app.core.config import settings
 
     with create_engine(settings.DIRECT_URL).connect() as conn:
