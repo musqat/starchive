@@ -27,7 +27,7 @@ def list_contents(
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
 
     stmt = (
-        stmt.order_by(Content.external_rating_count.desc())
+        stmt.order_by(Content.external_popularity.desc())
         .offset((page - 1) * size)
         .limit(size)
     )

@@ -26,12 +26,16 @@ def test_search(client):
 
 @pytest.mark.db
 def test_filter_by_type(client):
-    movies = client.get("/contents", params={"type": "MOVIE", "size": 1}).json()
-    books = client.get("/contents", params={"type": "BOOK", "size": 1}).json()
+    movies = client.get("/contents", params={"type": "MOVIE", "size": 3}).json()
+    books = client.get("/contents", params={"type": "BOOK", "size": 3}).json()
+    both = client.get("/contents", params={"size": 3}).json()
 
     assert movies["total"] > 0
-    assert books["total"] == 0  # 아직 책은 수집 전
+    assert books["total"] > 0
     assert all(row["type"] == "MOVIE" for row in movies["items"])
+    assert all(row["type"] == "BOOK" for row in books["items"])
+    # 필터를 안 걸면 두 타입의 합. 거르다 빠뜨리는 것이 없는지
+    assert both["total"] == movies["total"] + books["total"]
 
 
 @pytest.mark.db

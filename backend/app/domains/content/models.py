@@ -35,8 +35,8 @@ class Content(Base):
     content_metadata: Mapped[dict] = mapped_column(JSONB, default=dict)  # 타입별 표시 전용 필드
 
     # 평점
-    external_rating: Mapped[float | None]  # 평점.
-    external_rating_count: Mapped[int | None]  # 평가 수. 인기순 정렬 기준
+    external_rating: Mapped[float | None]  # 평점. 소스마다 척도가 달라 소스 간 비교 금지
+    external_popularity: Mapped[int | None]  # 인기 지표. TMDB=평가 수, 알라딘=판매 지수
 
     # 임베딩
     embedding_text: Mapped[str | None] = mapped_column(Text)  # 임베딩에 넣은 정규화 텍스트

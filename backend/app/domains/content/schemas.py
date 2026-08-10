@@ -41,7 +41,7 @@ class ContentDetail(ContentSummary):
                 "description": "은행 간부 앤디는 살인 누명을 쓰고 쇼생크에 수감된다...",
                 "release_date": "1994-09-23",
                 "creator": None,
-                "external_rating_count": 30965,
+                "external_popularity": 30965,
                 "content_metadata": {
                     "runtime": 142,
                     "original_title": "The Shawshank Redemption",
@@ -53,7 +53,7 @@ class ContentDetail(ContentSummary):
     description: str | None
     release_date: date | None
     creator: str | None
-    external_rating_count: int | None
+    external_popularity: int | None
     content_metadata: dict
 
 
