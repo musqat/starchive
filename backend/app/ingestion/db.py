@@ -1,4 +1,4 @@
-"""수집 스크립트 공용 DB 유틸."""
+"""수집 스크립트 공용 DB 유틸"""
 
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import insert
@@ -12,7 +12,7 @@ Session = sessionmaker(bind=engine)
 
 
 def upsert(session, row: dict) -> None:
-    """id 충돌 시 나머지 컬럼을 새 값으로 덮는다"""
+    """id 충돌 시 나머지 컬럼을 새 값으로 덮어씀"""
     stmt = insert(Content).values(**row)
     stmt = stmt.on_conflict_do_update(
         index_elements=["id"],
