@@ -20,13 +20,13 @@ async def test_fetch_and_normalize_book():
         assert row["source"] == "ALADIN"
         assert row["title"]
         assert row["genre"], "categoryName 파싱 실패"
-        assert "국내도서" not in row["genre"]  # 첫 칸(SearchTarget)은 버린다
+        assert "국내도서" not in row["genre"]  # 첫 칸(SearchTarget)은 제외
         assert "(" not in (row["creator"] or "")  # (지은이) 같은 역할 표기 제거
 
 
 @pytest.mark.external
 async def test_bestseller_start_is_page_number():
-    """start 는 페이지 번호, 1,2 겹치지않는지 테스트 """
+    """start 는 오프셋이 아니라 페이지 번호. 1 과 2 는 겹치지 않아야 함"""
     async with httpx.AsyncClient(timeout=30) as client:
         page1 = await fetch_bestsellers(client, start=1, max_results=50)
         page2 = await fetch_bestsellers(client, start=2, max_results=50)

@@ -8,6 +8,7 @@ _SUMMARY_EXAMPLE = {
     "id": "tmdb_278",
     "type": "MOVIE",
     "title": "쇼생크 탈출",
+    "creator": "프랭크 다라본트",
     "genre": ["드라마", "범죄"],
     "image_url": "https://image.tmdb.org/t/p/w500/qV9BQZdiM8foEzDz0Ag5hGWE5qM.jpg",
     "external_rating": 8.727,
@@ -25,6 +26,7 @@ class ContentSummary(BaseModel):
     id: str
     type: ContentType
     title: str
+    creator: str | None
     genre: list[str] | None
     image_url: str | None
     external_rating: float | None
@@ -40,7 +42,6 @@ class ContentDetail(ContentSummary):
                 **_SUMMARY_EXAMPLE,
                 "description": "은행 간부 앤디는 살인 누명을 쓰고 쇼생크에 수감된다...",
                 "release_date": "1994-09-23",
-                "creator": None,
                 "external_popularity": 30965,
                 "content_metadata": {
                     "runtime": 142,
@@ -52,7 +53,6 @@ class ContentDetail(ContentSummary):
 
     description: str | None
     release_date: date | None
-    creator: str | None
     external_popularity: int | None
     content_metadata: dict
 

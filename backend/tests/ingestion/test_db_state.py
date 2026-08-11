@@ -1,4 +1,4 @@
-"""적재 결과 확인 테스트"""
+"""적재 결과 확인"""
 
 import pytest
 from sqlalchemy import create_engine, text

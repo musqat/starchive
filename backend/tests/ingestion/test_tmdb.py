@@ -31,12 +31,12 @@ async def test_normalize():
     assert row["external_id"] == "278"
     assert row["genre"]
     assert row["image_url"].startswith("https://")
-    assert row["creator"], "append_to_response=credits 가 빠졌다"
+    assert row["creator"], "append_to_response=credits 누락"
 
 
 @pytest.mark.external
 async def test_overview_coverage():
-    """한국어 줄거리가 없는 비율. 임베딩 대상이 얼마나 줄어드는지."""
+    """한국어 줄거리가 없는 비율. 임베딩 대상이 얼마나 줄어드는지"""
     ids = load_target_tmdb_ids(Path("data/ml-latest-small"))[::100]  # 30개 표본
 
     missing = 0
@@ -48,4 +48,4 @@ async def test_overview_coverage():
             if not data["overview"]:
                 missing += 1
 
-    assert missing / len(ids) < 0.15, f"줄거리 없는 비율이 15% 를 넘는다: {missing}/{len(ids)}"
+    assert missing / len(ids) < 0.15, f"줄거리 없는 비율 15% 초과: {missing}/{len(ids)}"
