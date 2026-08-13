@@ -39,8 +39,7 @@ CATEGORY_DEPTH = 2
 
 
 def _categories(raw: str | None) -> list[str]:
-    """'국내도서>소설/시/희곡>영미소설>영미소설 일반' → ['소설/시/희곡', '영미소설'].
-    """
+    """'국내도서>소설/시/희곡>영미소설>영미소설 일반' → ['소설/시/희곡', '영미소설']."""
     if not raw:
         return []
     parts = [c.strip() for c in raw.split(">")[1:] if c.strip()]

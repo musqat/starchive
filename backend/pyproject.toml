@@ -13,6 +13,7 @@ dependencies = [
     "httpx",
     "openai",
     "pydantic-settings",
+    "pydantic[email]>=2.13.4",
 ]
 
 [dependency-groups]
@@ -28,9 +29,9 @@ exclude = ["alembic/versions"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
-# FastAPI 는 Depends/Query 를 인자 기본값에 두는 것이 정상 문법
-"app/**/router.py" = ["B008"]
-# Vercel 진입점. app 은 재노출이 목적이라 미사용처럼 보인다
+"app/**/*router.py" = ["B008"]
+"app/core/deps.py" = ["B008"]
+# Vercel 진입점
 "api/index.py" = ["F401"]
 
 [tool.pytest.ini_options]
