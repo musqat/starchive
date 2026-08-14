@@ -9,7 +9,7 @@ export default async function PublicMemos({ contentId }: { contentId: string }) 
   return (
     <section className="mt-6 border-t border-line pt-5">
       <h2 className="mb-3 text-[13px] font-medium">
-        다른 사람의 메모 <span className="text-muted">{memos.length}</span>
+        다른 사람의 댓글 <span className="text-muted">{memos.length}</span>
       </h2>
 
       <ul className="space-y-4">

@@ -152,11 +152,11 @@ test("상세에서 좋아요와 추천해요는 따로 켜진다", async ({ page
   await expect(detail(page, "추천해요")).toHaveAttribute("aria-pressed", "false");
 });
 
-test("메모를 남기면 새로고침 후에도 남는다", async ({ page }) => {
+test("댓글을 남기면 새로고침 후에도 남는다", async ({ page }) => {
   await signUp(page);
   await page.goto(DETAIL);
 
-  const memo = page.getByLabel("내 메모");
+  const memo = page.getByLabel("내 댓글");
   await memo.fill("다시 볼 것");
   await saving(page, page.getByRole("button", { name: "저장" }).click());
 
@@ -166,11 +166,11 @@ test("메모를 남기면 새로고침 후에도 남는다", async ({ page }) =>
   await expect(memo).toHaveValue("다시 볼 것");
 });
 
-test("공개하지 않은 메모는 남에게 보이지 않는다", async ({ page }) => {
+test("공개하지 않은 댓글은 남에게 보이지 않는다", async ({ page }) => {
   await signUp(page);
   await page.goto(DETAIL);
 
-  await page.getByLabel("내 메모").fill("혼자만 볼 것");
+  await page.getByLabel("내 댓글").fill("혼자만 볼 것");
   await saving(page, page.getByRole("button", { name: "저장" }).click());
 
   // 다른 계정으로 바꿔 본다
@@ -183,11 +183,11 @@ test("공개하지 않은 메모는 남에게 보이지 않는다", async ({ pag
   await expect(page.locator("main")).not.toContainText("혼자만 볼 것");
 });
 
-test("메모 탭에 메모 남긴 것만 본문과 함께 나온다", async ({ page }) => {
+test("댓글 탭에 댓글 남긴 것만 본문과 함께 나온다", async ({ page }) => {
   await signUp(page);
   await page.goto(DETAIL);
 
-  await page.getByLabel("내 메모").fill("탭에서 보일 것");
+  await page.getByLabel("내 댓글").fill("탭에서 보일 것");
   await saving(page, page.getByRole("button", { name: "저장" }).click());
 
   await page.goto("/library?filter=memo");
@@ -196,11 +196,11 @@ test("메모 탭에 메모 남긴 것만 본문과 함께 나온다", async ({ p
   await expect(page.locator("main")).toContainText("탭에서 보일 것");
 });
 
-test("메모를 고치고 지울 수 있다", async ({ page }) => {
+test("댓글을 고치고 지울 수 있다", async ({ page }) => {
   await signUp(page);
   await page.goto(DETAIL);
 
-  const memo = page.getByLabel("내 메모");
+  const memo = page.getByLabel("내 댓글");
   const save = page.getByRole("button", { name: "저장" });
   const remove = page.getByRole("button", { name: "삭제" });
 
@@ -222,4 +222,44 @@ test("메모를 고치고 지울 수 있다", async ({ page }) => {
   await page.reload();
   await expect(memo).toHaveValue("");
   await expect(remove).toHaveCount(0);
+});
+
+test("저장하지 않은 댓글이 있으면 드로어가 바로 닫히지 않는다", async ({ page }) => {
+  await signUp(page);
+  await page.goto("/movies");
+  await page.locator('a[href^="/contents/"]').first().click();
+
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toBeVisible();
+  await page.getByLabel("내 댓글").fill("한참 쓰던 댓글");
+
+  // 취소하면 그대로 남는다
+  page.once("dialog", (d) => d.dismiss());
+  await drawer.click({ position: { x: 20, y: 300 } });
+  await expect(drawer).toBeVisible();
+  await expect(page.getByLabel("내 댓글")).toHaveValue("한참 쓰던 댓글");
+
+  // 저장하면 묻지 않고 닫힌다
+  await saving(page, page.getByRole("button", { name: "저장" }).click());
+  await drawer.click({ position: { x: 20, y: 300 } });
+  await expect(drawer).toHaveCount(0);
+});
+
+test("내용 없이 공개만 켜서 저장할 수 없다", async ({ page }) => {
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  const publish = page.getByRole("checkbox", { name: "공개" });
+  const save = page.getByRole("button", { name: "저장" });
+
+  await expect(publish).toBeDisabled();
+  await expect(save).toBeDisabled();
+
+  await page.getByLabel("내 댓글").fill("이제 쓴다");
+  await expect(publish).toBeEnabled();
+  await expect(save).toBeEnabled();
+
+  // 저장하고 나면 다시 잠긴다
+  await saving(page, save.click());
+  await expect(save).toBeDisabled();
 });

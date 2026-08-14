@@ -5,7 +5,7 @@ import pytest
 
 from app.core.clients.tmdb import fetch_movie
 from app.ingestion.movielens import load_target_tmdb_ids
-from app.ingestion.normalizer import normalize_movie
+from app.ingestion.normalizer import _providers, normalize_movie
 
 
 @pytest.mark.external
@@ -49,3 +49,31 @@ async def test_overview_coverage():
                 missing += 1
 
     assert missing / len(ids) < 0.15, f"줄거리 없는 비율 15% 초과: {missing}/{len(ids)}"
+
+
+def test_providers_prefers_flatrate():
+    """구독이 대여·구매보다 앞에 오고, 같은 서비스는 한 번만"""
+    raw = {
+        "watch/providers": {
+            "results": {
+                "KR": {
+                    "link": "https://example.com/watch",
+                    "rent": [{"provider_id": 3, "provider_name": "Google Play", "logo_path": "/g.jpg"}],
+                    "flatrate": [{"provider_id": 1, "provider_name": "wavve", "logo_path": "/w.jpg"}],
+                    "buy": [{"provider_id": 3, "provider_name": "Google Play", "logo_path": "/g.jpg"}],
+                }
+            }
+        }
+    }
+
+    result = _providers(raw)
+
+    assert [p["name"] for p in result["items"]] == ["wavve", "Google Play"]
+    assert result["items"][1]["kind"] == "rent"  # 먼저 만난 종류를 쓴다
+    assert result["link"] == "https://example.com/watch"
+
+
+def test_providers_absent_region():
+    """한국에서 볼 수 없으면 None"""
+    assert _providers({"watch/providers": {"results": {"US": {"link": "x"}}}}) is None
+    assert _providers({}) is None

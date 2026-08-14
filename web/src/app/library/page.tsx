@@ -10,7 +10,7 @@ const TABS = [
   { key: "", label: "전체" },
   { key: "liked", label: "좋아요" },
   { key: "recommended", label: "추천해요" },
-  { key: "memo", label: "메모" },
+  { key: "memo", label: "댓글" },
 ] as const;
 
 type Filter = (typeof TABS)[number]["key"];

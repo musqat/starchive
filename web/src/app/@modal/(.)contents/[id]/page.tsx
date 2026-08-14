@@ -15,7 +15,7 @@ export default async function ContentDrawer({
   if (!item) notFound();
 
   return (
-    <Drawer>
+    <Drawer pagePath={`/contents/${id}`}>
       <ContentDetailView item={item} />
     </Drawer>
   );
