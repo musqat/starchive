@@ -15,6 +15,9 @@ router = APIRouter(prefix="/me", tags=["records"])
 def list_library(
     status: ContentStatus | None = Query(None),
     type: ContentType | None = Query(None),
+    liked: bool | None = Query(None),
+    recommended: bool | None = Query(None),
+    has_memo: bool | None = Query(None, description="메모를 남긴 것만"),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     user: User = Depends(get_current_user),
@@ -25,6 +28,14 @@ def list_library(
         stmt = stmt.where(UserContent.status == status)
     if type:
         stmt = stmt.join(Content).where(Content.type == type)
+    if liked is not None:
+        stmt = stmt.where(UserContent.liked == liked)
+    if recommended is not None:
+        stmt = stmt.where(UserContent.recommended == recommended)
+    if has_memo is not None:
+        stmt = stmt.where(
+            UserContent.memo.isnot(None) if has_memo else UserContent.memo.is_(None)
+        )
     stmt = stmt.order_by(UserContent.updated_at.desc()).offset((page - 1) * size).limit(size)
 
     records = db.scalars(stmt).unique().all()
@@ -32,6 +43,7 @@ def list_library(
     for record in records:
         record.content.my_status = record.status
         record.content.my_rating = record.rating
+        record.content.my_liked = record.liked
         record.content.my_recommended = record.recommended
     return records
 
@@ -42,7 +54,7 @@ def upsert_record(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """rating 이나 recommended 가 있으면 status 도 DONE 으로 변경"""
+    """평가·기호·추천 중 하나라도 있으면 status 도 DONE 으로 변경"""
 
     if not db.get(Content, content_id):
         raise HTTPException(status_code=404, detail="Content not found")
@@ -54,12 +66,19 @@ def upsert_record(
         db.add(record)
     if payload.status is not None:
         record.status = payload.status
+    if payload.liked is not None:
+        record.liked = payload.liked
     if payload.recommended is not None:
         record.recommended = payload.recommended
+    if payload.memo_public is not None:
+        record.memo_public = payload.memo_public
+    # 메모도 빈 값을 보내 지울 수 있어야 한다
+    if "memo" in payload.model_fields_set:
+        record.memo = payload.memo or None
     # rating 은 null 을 보내 지울 수 있어야 하므로 전송 여부로 판단한다
     if "rating" in payload.model_fields_set:
         record.rating = payload.rating
-    if record.rating or record.recommended:
+    if record.rating or record.liked or record.recommended or record.memo:
         record.status = ContentStatus.DONE
     db.commit()
     db.refresh(record)

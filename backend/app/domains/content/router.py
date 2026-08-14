@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.deps import get_current_user_optional
 from app.domains.content.models import Content, ContentType
-from app.domains.content.schemas import ContentDetail, ContentPage
+from app.domains.content.schemas import ContentDetail, ContentPage, PublicMemo
 from app.domains.user.models import User, UserContent
 
 router = APIRouter(prefix="/contents", tags=["contents"])
@@ -31,7 +31,10 @@ def attach_records(db: Session, user: User | None, items: list[Content]) -> list
         record = records.get(content.id)
         content.my_status = record.status if record else None
         content.my_rating = record.rating if record else None
+        content.my_liked = record.liked if record else False
         content.my_recommended = record.recommended if record else False
+        content.my_memo = record.memo if record else None
+        content.my_memo_public = record.memo_public if record else False
     return items
 
 
@@ -123,3 +126,39 @@ def get_content(
     if row is None:
         raise HTTPException(404, "content not found")
     return attach_records(db, user, [row])[0]
+
+
+@router.get(
+    "/{content_id}/memos",
+    response_model=list[PublicMemo],
+    summary="공개 메모",
+)
+def list_public_memos(
+    content_id: str = Path(..., description="목록 응답의 id"),
+    limit: int = Query(20, ge=1, le=50),
+    user: User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """공개로 켠 것만. 내 메모는 상세 응답에 있으므로 뺀다"""
+    stmt = (
+        select(UserContent)
+        .where(
+            UserContent.content_id == content_id,
+            UserContent.memo_public.is_(True),
+            UserContent.memo.isnot(None),
+        )
+        .order_by(UserContent.updated_at.desc())
+        .limit(limit)
+    )
+    if user:
+        stmt = stmt.where(UserContent.user_id != user.id)
+
+    return [
+        PublicMemo(
+            nickname=record.user.nickname,
+            memo=record.memo,
+            rating=record.rating,
+            updated_at=record.updated_at,
+        )
+        for record in db.scalars(stmt).unique()
+    ]

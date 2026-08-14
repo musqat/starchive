@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -35,6 +35,7 @@ class ContentSummary(BaseModel):
     # 로그인했을 때만 채워진다
     my_status: ContentStatus | None = None
     my_rating: int | None = None
+    my_liked: bool = False
     my_recommended: bool = False
 
 
@@ -61,6 +62,21 @@ class ContentDetail(ContentSummary):
     release_date: date | None
     external_popularity: int | None
     content_metadata: dict
+
+    # 메모는 상세에서만. 목록 응답이 무거워진다
+    my_memo: str | None = None
+    my_memo_public: bool = False
+
+
+class PublicMemo(BaseModel):
+    """공개로 켠 남의 메모"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    nickname: str
+    memo: str
+    rating: int | None
+    updated_at: datetime
 
 
 class ContentPage(BaseModel):

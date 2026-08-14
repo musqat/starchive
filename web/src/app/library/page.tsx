@@ -2,25 +2,32 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import ContentGrid from "@/components/ContentGrid";
+import MemoList from "@/components/MemoList";
 import { getLibrary } from "@/lib/api";
-import { MIXED_STATUS_LABEL } from "@/lib/labels";
-import type { ContentStatus } from "@/lib/types";
 
-const TABS: { label: string; status?: ContentStatus }[] = [
-  { label: "전체" },
-  { label: MIXED_STATUS_LABEL.WISH, status: "WISH" },
-  { label: MIXED_STATUS_LABEL.DOING, status: "DOING" },
-  { label: MIXED_STATUS_LABEL.DONE, status: "DONE" },
-];
+/** 화면에서 만들 수 있는 신호만 탭으로 둔다 */
+const TABS = [
+  { key: "", label: "전체" },
+  { key: "liked", label: "좋아요" },
+  { key: "recommended", label: "추천해요" },
+  { key: "memo", label: "메모" },
+] as const;
+
+type Filter = (typeof TABS)[number]["key"];
 
 export default async function LibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: ContentStatus }>;
+  searchParams: Promise<{ filter?: Filter }>;
 }) {
-  const { status } = await searchParams;
+  const { filter = "" } = await searchParams;
 
-  const items = await getLibrary({ status, size: 100 }).catch(() => null);
+  const items = await getLibrary({
+    liked: filter === "liked" ? true : undefined,
+    recommended: filter === "recommended" ? true : undefined,
+    has_memo: filter === "memo" ? true : undefined,
+    size: 100,
+  }).catch(() => null);
   if (!items) redirect("/login");
 
   return (
@@ -31,9 +38,9 @@ export default async function LibraryPage({
         {TABS.map((tab) => (
           <Link
             key={tab.label}
-            href={tab.status ? `/library?status=${tab.status}` : "/library"}
+            href={tab.key ? `/library?filter=${tab.key}` : "/library"}
             className={`rounded-full px-3 py-1 text-[13px] ${
-              status === tab.status ? "bg-foreground text-background" : "bg-fill text-muted"
+              filter === tab.key ? "bg-foreground text-background" : "bg-fill text-muted"
             }`}
           >
             {tab.label}
@@ -48,6 +55,8 @@ export default async function LibraryPage({
             둘러보기
           </Link>
         </p>
+      ) : filter === "memo" ? (
+        <MemoList items={items} />
       ) : (
         <ContentGrid items={items.map((item) => item.content)} />
       )}

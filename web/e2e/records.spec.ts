@@ -138,3 +138,88 @@ test("비로그인은 안 본 것만 칩이 없다", async ({ page }) => {
 
   await expect(page.getByRole("link", { name: "안 본 것만" })).toHaveCount(0);
 });
+
+test("상세에서 좋아요와 추천해요는 따로 켜진다", async ({ page }) => {
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  await saving(page, detail(page, "봤어요").click());
+  await saving(page, detail(page, "좋아요").click());
+
+  await page.reload();
+
+  await expect(detail(page, "좋아요")).toHaveAttribute("aria-pressed", "true");
+  await expect(detail(page, "추천해요")).toHaveAttribute("aria-pressed", "false");
+});
+
+test("메모를 남기면 새로고침 후에도 남는다", async ({ page }) => {
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  const memo = page.getByLabel("내 메모");
+  await memo.fill("다시 볼 것");
+  await saving(page, page.getByRole("button", { name: "저장" }).click());
+
+  await expect(page.getByText("저장했습니다")).toBeVisible();
+
+  await page.reload();
+  await expect(memo).toHaveValue("다시 볼 것");
+});
+
+test("공개하지 않은 메모는 남에게 보이지 않는다", async ({ page }) => {
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  await page.getByLabel("내 메모").fill("혼자만 볼 것");
+  await saving(page, page.getByRole("button", { name: "저장" }).click());
+
+  // 다른 계정으로 바꿔 본다
+  await page.getByRole("button", { name: "내 계정" }).click();
+  await page.getByRole("menuitem", { name: "로그아웃" }).click();
+  await page.waitForURL("/");
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  await expect(page.locator("main")).not.toContainText("혼자만 볼 것");
+});
+
+test("메모 탭에 메모 남긴 것만 본문과 함께 나온다", async ({ page }) => {
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  await page.getByLabel("내 메모").fill("탭에서 보일 것");
+  await saving(page, page.getByRole("button", { name: "저장" }).click());
+
+  await page.goto("/library?filter=memo");
+
+  await expect(page.locator("main")).toContainText(TITLE);
+  await expect(page.locator("main")).toContainText("탭에서 보일 것");
+});
+
+test("메모를 고치고 지울 수 있다", async ({ page }) => {
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  const memo = page.getByLabel("내 메모");
+  const save = page.getByRole("button", { name: "저장" });
+  const remove = page.getByRole("button", { name: "삭제" });
+
+  // 메모가 없으면 삭제 버튼도 없다
+  await expect(remove).toHaveCount(0);
+
+  await memo.fill("처음 쓴 것");
+  await saving(page, save.click());
+  await expect(remove).toBeVisible();
+
+  await memo.fill("고쳐 쓴 것");
+  await saving(page, save.click());
+  await page.reload();
+  await expect(memo).toHaveValue("고쳐 쓴 것");
+
+  await saving(page, remove.click());
+  await expect(page.getByText("지웠습니다")).toBeVisible();
+
+  await page.reload();
+  await expect(memo).toHaveValue("");
+  await expect(remove).toHaveCount(0);
+});

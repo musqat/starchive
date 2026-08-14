@@ -42,7 +42,14 @@ export function withdraw(body: { password: string }) {
 
 export function putRecord(
   contentId: string,
-  body: { status?: ContentStatus; rating?: number | null; recommended?: boolean },
+  body: {
+    status?: ContentStatus;
+    rating?: number | null;
+    liked?: boolean;
+    recommended?: boolean;
+    memo?: string | null;
+    memo_public?: boolean;
+  },
 ) {
   return request<ContentRecord>(`/me/records/${encodeURIComponent(contentId)}`, {
     method: "PUT",

@@ -9,6 +9,9 @@ from app.core.base import Base
 from app.domains.content.models import Content
 
 
+MEMO_MAX_LENGTH = 500
+
+
 class ContentStatus(enum.StrEnum):
     """컨텐츠 상태"""
 
@@ -41,14 +44,20 @@ class UserContent(Base):
 
     status: Mapped[ContentStatus] = mapped_column(SAEnum(ContentStatus, name="content_status"))
     rating: Mapped[int | None]  # 내 평점 1~5
-    recommended: Mapped[bool] = mapped_column(Boolean, default=False)  # 추천
+    liked: Mapped[bool] = mapped_column(Boolean, default=False)  # 내 기호
+    recommended: Mapped[bool] = mapped_column(Boolean, default=False)  # 남에게 권할 만함
+    memo: Mapped[str | None] = mapped_column(String(MEMO_MAX_LENGTH))
+    memo_public: Mapped[bool] = mapped_column(Boolean, default=False)  # 켜면 닉네임과 함께 공개
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     content: Mapped[Content] = relationship(lazy="joined")
+    user: Mapped[User] = relationship(lazy="joined")
 
     __table_args__ = (
         Index("ix_user_contents_user_updated", "user_id", "updated_at"),  # 내 서재
         Index("ix_user_contents_rating", "user_id", "rating"),  # 개인화 추천 입력
+        Index("ix_user_contents_liked", "user_id", "liked"),  # 개인화 추천 입력
         Index("ix_user_contents_recommended", "user_id", "recommended"),  # 커뮤니티 신호
+        Index("ix_user_contents_public_memo", "content_id", "memo_public"),  # 상세의 공개 메모
     )

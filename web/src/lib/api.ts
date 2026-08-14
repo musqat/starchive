@@ -6,6 +6,7 @@ import type {
   ContentStatus,
   ContentType,
   LibraryItem,
+  PublicMemo,
   SortKey,
   SortOrder,
   User,
@@ -56,6 +57,10 @@ export function getContent(id: string): Promise<ContentDetail> {
   return get<ContentDetail>(`/contents/${encodeURIComponent(id)}`);
 }
 
+export function getPublicMemos(id: string): Promise<PublicMemo[]> {
+  return get<PublicMemo[]>(`/contents/${encodeURIComponent(id)}/memos`);
+}
+
 export function getGenres(type: ContentType): Promise<string[]> {
   return get<string[]>(`/contents/genres?type=${type}`);
 }
@@ -66,7 +71,15 @@ export function getMe(): Promise<User | null> {
 }
 
 export function getLibrary(
-  params: { status?: ContentStatus; type?: ContentType; page?: number; size?: number } = {},
+  params: {
+    status?: ContentStatus;
+    type?: ContentType;
+    liked?: boolean;
+    recommended?: boolean;
+    has_memo?: boolean;
+    page?: number;
+    size?: number;
+  } = {},
 ): Promise<LibraryItem[]> {
   return get<LibraryItem[]>(`/me/library${toQuery(params)}`);
 }

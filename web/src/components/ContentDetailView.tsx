@@ -1,6 +1,9 @@
 import Image from "next/image";
 
 import DetailActions from "@/components/DetailActions";
+import MemoForm from "@/components/MemoForm";
+import PublicMemos from "@/components/PublicMemos";
+import WatchLinks from "@/components/WatchLinks";
 import type { ContentDetail } from "@/lib/types";
 
 /** 매체별로 다른 필드. 없으면 그 줄이 그려지지 않는다 */
@@ -25,18 +28,21 @@ export default function ContentDetailView({ item }: { item: ContentDetail }) {
   const people = isMovie ? meta.cast?.join(", ") : meta.author;
 
   return (
-    <article className="grid gap-6 sm:grid-cols-[140px_1fr]">
+    // 전체 페이지에서는 가운데로 모은다. 드로어(max-w-xl) 안에서는 그대로 꽉 찬다
+    <article className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-8">
       <div>
-        <div className="relative aspect-[2/3] w-full max-w-[140px] overflow-hidden rounded-lg bg-fill">
+        <div className="relative aspect-[2/3] w-full max-w-[200px] overflow-hidden rounded-lg bg-fill">
           {item.image_url && (
-            <Image src={item.image_url} alt="" fill sizes="140px" className="object-cover" />
+            <Image src={item.image_url} alt="" fill sizes="200px" className="object-cover" />
           )}
         </div>
+        {/* 좋아요·추천해요가 조건부로 생기므로 고정된 것을 위에 둔다 */}
+        <WatchLinks item={item} />
         <DetailActions item={item} />
       </div>
 
       <div>
-        <h1 className="text-xl font-medium">{item.title}</h1>
+        <h1 className="text-2xl font-medium">{item.title}</h1>
 
         {subtitle.length > 0 && (
           <p className="mt-1 text-[13px] text-muted">{subtitle.join(" · ")}</p>
@@ -79,6 +85,9 @@ export default function ContentDetailView({ item }: { item: ContentDetail }) {
         {item.description && (
           <p className="mt-4 text-sm leading-7 text-muted">{item.description}</p>
         )}
+
+        <MemoForm item={item} />
+        <PublicMemos contentId={item.id} />
       </div>
     </article>
   );
