@@ -1,7 +1,7 @@
 import ContentGrid from "@/components/ContentGrid";
 import Filters from "@/components/Filters";
 import Pagination from "@/components/Pagination";
-import { getContents, getGenres } from "@/lib/api";
+import { getContents, getGenres, getMe } from "@/lib/api";
 import type { ContentType, SortKey, SortOrder } from "@/lib/types";
 
 const SIZE = 20;
@@ -10,6 +10,7 @@ export type BrowseParams = {
   genre?: string;
   sort?: SortKey;
   order?: SortOrder;
+  unseen?: string;
   page?: string;
 };
 
@@ -27,11 +28,13 @@ export default async function BrowsePage({
   searchParams: BrowseParams;
 }) {
   const { genre, sort = "popular", order = "desc" } = searchParams;
+  const unseen = searchParams.unseen === "1";
   const page = Number(searchParams.page ?? 1);
 
-  const [data, genres] = await Promise.all([
-    getContents({ type, genre, sort, order, page, size: SIZE }),
+  const [data, genres, me] = await Promise.all([
+    getContents({ type, genre, sort, order, unseen, page, size: SIZE }),
     getGenres(type),
+    getMe(),
   ]);
 
   return (
@@ -50,6 +53,8 @@ export default async function BrowsePage({
         genre={genre}
         sort={sort}
         order={order}
+        unseen={unseen}
+        showUnseen={me !== null}
       />
 
       {data.items.length === 0 ? (
@@ -66,6 +71,7 @@ export default async function BrowsePage({
           ...(genre ? { genre } : {}),
           ...(sort !== "popular" ? { sort } : {}),
           ...(order !== "desc" ? { order } : {}),
+          ...(unseen ? { unseen: "1" } : {}),
         }}
       />
     </>

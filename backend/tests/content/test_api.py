@@ -131,3 +131,50 @@ def test_search_empty(client):
     body = r.json()
     assert body["items"] == []
     assert body["total"] == 0
+
+
+@pytest.mark.db  # 비로그인은 내 기록이 비어 있음
+def test_my_status_anonymous(client):
+    item = client.get("/contents?size=1").json()["items"][0]
+
+    assert item["my_status"] is None
+    assert item["my_recommended"] is False
+
+
+@pytest.mark.db  # 로그인하면 목록과 상세에 내 기록이 붙음
+def test_my_status_attached(auth_client):
+    auth_client.put("/me/records/tmdb_157336", json={"recommended": True})
+
+    items = auth_client.get("/contents", params={"q": "인터스텔라"}).json()["items"]
+    assert items[0]["my_status"] == "DONE"
+    assert items[0]["my_recommended"] is True
+
+    detail = auth_client.get("/contents/tmdb_157336").json()
+    assert detail["my_status"] == "DONE"
+
+
+@pytest.mark.db  # 기록이 없는 항목은 기본값
+def test_my_status_absent(auth_client):
+    item = auth_client.get("/contents/tmdb_27205").json()
+
+    assert item["my_status"] is None
+    assert item["my_recommended"] is False
+
+
+@pytest.mark.db  # unseen=1 은 내가 기록한 항목을 뺌
+def test_unseen_excludes_recorded(auth_client):
+    before = auth_client.get("/contents", params={"q": "인터스텔라"}).json()
+    auth_client.put("/me/records/tmdb_157336", json={"status": "DONE"})
+
+    after = auth_client.get("/contents", params={"q": "인터스텔라", "unseen": 1}).json()
+
+    assert before["total"] - after["total"] == 1
+    assert "tmdb_157336" not in [i["id"] for i in after["items"]]
+
+
+@pytest.mark.db  # 비로그인은 뺄 기록이 없어 그대로
+def test_unseen_ignored_when_logged_out(client):
+    plain = client.get("/contents", params={"q": "인터스텔라"}).json()
+    filtered = client.get("/contents", params={"q": "인터스텔라", "unseen": 1}).json()
+
+    assert plain["total"] == filtered["total"]

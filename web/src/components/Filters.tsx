@@ -46,12 +46,17 @@ export default function Filters({
   genre,
   sort,
   order,
+  unseen,
+  showUnseen,
 }: {
   basePath: string;
   genres: string[];
   genre?: string;
   sort: SortKey;
   order: SortOrder;
+  unseen: boolean;
+  /** 비로그인이면 걸러낼 기록이 없어 칩을 숨긴다 */
+  showUnseen: boolean;
 }) {
   // 선택된 장르가 상위 12개 밖이면 목록에 추가
   const shown = genres.slice(0, MAX_GENRES);
@@ -62,6 +67,7 @@ export default function Filters({
     genre,
     sort: sort === "popular" ? undefined : sort,
     order: order === "desc" ? undefined : order,
+    unseen: unseen ? "1" : undefined,
   };
 
   return (
@@ -78,6 +84,7 @@ export default function Filters({
                 genre,
                 sort: s.key === "popular" ? undefined : s.key,
                 order: nextOrder === "desc" ? undefined : nextOrder,
+                unseen: unseen ? "1" : undefined,
               })}
               active={active}
             >
@@ -86,6 +93,12 @@ export default function Filters({
             </Chip>
           );
         })}
+
+        {showUnseen && (
+          <Chip to={href(basePath, { ...keep, unseen: unseen ? undefined : "1" })} active={unseen}>
+            안 본 것만
+          </Chip>
+        )}
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
