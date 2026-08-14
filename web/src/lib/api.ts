@@ -11,7 +11,8 @@ import type {
   User,
 } from "@/lib/types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL;
+/** 서버는 rewrite 를 거칠 필요가 없어 백엔드로 바로 간다 */
+const BASE = process.env.BACKEND_ORIGIN ?? "http://localhost:8000";
 
 type ListParams = {
   type?: ContentType;

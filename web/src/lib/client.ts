@@ -2,7 +2,8 @@
 
 import type { ContentRecord, ContentStatus, User } from "@/lib/types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL;
+/** next.config 의 rewrite 로 백엔드에 닿는다. 같은 출처라 쿠키가 이 도메인에 저장된다 */
+const BASE = "/api";
 
 /** 브라우저에서 부르는 쪽. credentials 로 쿠키를 주고받는다 */
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {

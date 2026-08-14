@@ -18,6 +18,18 @@ from app.domains.user.schemas import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def set_auth_cookie(response: Response, user_id: int) -> None:
+    """프론트가 /api 로 프록시해 같은 출처가 되므로 lax"""
+    response.set_cookie(
+        COOKIE_NAME,
+        create_access_token(user_id),
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_DAYS * 86400,
+    )
+
+
 @router.post("/signup", response_model=UserOut, status_code=201)
 def sign_up(payload: SignUpIn, db: Session = Depends(get_db)):
     """이메일 중복이면 409"""
@@ -44,15 +56,7 @@ def log_in(payload: LoginIn, response: Response, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="invalid credentials")
     
-    response.set_cookie(
-        COOKIE_NAME,
-        create_access_token(user.id),
-        httponly=True,
-        secure=settings.COOKIE_SECURE,
-        samesite="none" if settings.COOKIE_SECURE else "lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_DAYS * 86400,
-    )
-
+    set_auth_cookie(response, user.id)
     return user
 
 @router.post("/logout", status_code=204)
@@ -78,14 +82,7 @@ def change_password(
     user.password_hash = hash_password(payload.new_password)
     db.commit()
 
-    response.set_cookie(
-        COOKIE_NAME,
-        create_access_token(user.id),
-        httponly=True,
-        secure=settings.COOKIE_SECURE,
-        samesite="none" if settings.COOKIE_SECURE else "lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_DAYS * 86400,
-    )
+    set_auth_cookie(response, user.id)
 
 
 # DELETE 는 본문을 떼는 프록시가 있어 POST 로 받는다
