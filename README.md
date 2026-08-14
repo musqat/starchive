@@ -36,22 +36,22 @@ starchive/
         └── lib/           타입, API 클라이언트
 ```
 
-**DB** — Neon(Postgres). `pgvector` 확장을 켜뒀고 임베딩 컬럼이 비어 있는 상태다.
+**DB** — Neon(Postgres)
 
 **한 테이블** — 영화·책·웹툰을 `contents` 하나에 담고 `type` 으로 구분한다. 매체별
-고유 필드는 `content_metadata`(JSONB). 사용자 기록·리뷰가 FK 하나로 연결되고,
-벡터 검색이 매체 구분 없이 한 쿼리로 돈다.
+고유 필드는 `content_metadata`(JSONB). 사용자 기록이 FK 하나로 연결된다.
 
-**서버 컴포넌트** — 데이터 조회는 Next 서버에서 일어난다. 브라우저는 API 주소를
-모르고 CORS 를 타지 않는다.
+**같은 출처** — 브라우저는 `/api` 로만 요청하고 `next.config.ts` 의 rewrite 가 백엔드로
+넘긴다. 인증 쿠키가 프론트 도메인에 저장돼야 서버 컴포넌트가 `cookies()` 로 읽는다.
 
 <br>
 
 ## 시작
 
-**요구 사항** — Python 3.11+ ([uv](https://docs.astral.sh/uv/)), Node 20+, Neon 계정
+Python 3.11+ ([uv](https://docs.astral.sh/uv/)), Node 20+, Neon 계정이 필요하다.
+명령은 각 디렉터리 안에서 실행한다.
 
-### 백엔드
+**백엔드**
 
 ```bash
 cd backend
@@ -61,9 +61,7 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
-`http://127.0.0.1:8000/docs`
-
-### 프론트
+**프론트**
 
 ```bash
 cd web
@@ -73,9 +71,6 @@ npm run dev
 ```
 
 `http://localhost:3000`
-
-> 명령은 각 디렉터리 안에서 실행한다. `pyproject.toml` 과 `package.json` 이
-> 하위에 있어 저장소 루트에서는 설정을 찾지 못한다.
 
 <br>
 
@@ -88,6 +83,7 @@ npm run dev
 | `DATABASE_URL` | Neon **pooler** 주소. API 서버용 |
 | `DIRECT_URL` | Neon 직접 연결. 마이그레이션·대량 적재용 |
 | `JWT_SECRET` | 토큰 서명 |
+| `COOKIE_SECURE` | 배포는 `true`. https 에서만 쿠키를 보낸다 |
 | `TMDB_API_KEY` | 영화 수집 |
 | `ALADIN_TTB_KEY` | 책 수집 |
 | `FRONTEND_ORIGIN` | CORS 허용 출처 |
@@ -96,9 +92,7 @@ npm run dev
 
 | 키 | 용도 |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | 백엔드 주소. `https://` 포함, 끝에 `/` 없이 |
-
-`NEXT_PUBLIC_` 값은 빌드 시점에 코드로 들어간다. 변경 후 재배포가 필요하다.
+| `BACKEND_ORIGIN` | 백엔드 주소. `https://` 포함, 끝에 `/` 없이 |
 
 <br>
 
@@ -117,30 +111,13 @@ uv run python -m scripts.ingest_books     # 3분
 
 ## API
 
-| | |
-|---|---|
-| `GET /contents` | 목록 |
-| `GET /contents/genres` | 타입별 장르 목록. 실제 데이터에 있는 것만 빈도순 |
-| `GET /contents/{id}` | 상세 |
-| `GET /health` | 헬스체크 |
+전체 목록과 파라미터는 [`/docs`](https://starchive-psi.vercel.app/docs) 참고
 
-**`GET /contents` 파라미터**
-
-| | |
-|---|---|
-| `q` | 제목 부분 일치 |
-| `type` | `MOVIE` / `BOOK` / `WEBTOON` |
-| `genre` | 장르 정확히 일치 |
-| `sort` | `popular`(기본) / `rating` / `recent` |
-| `order` | `desc`(기본) / `asc` |
-| `page`, `size` | 1부터, 1~100 |
-
-응답의 `total` 은 현재 페이지가 아니라 필터에 걸린 전체 개수다.
-
-`sort=rating` 은 평가 수 100 미만을 제외한다. 표본이 적은 평점은 신뢰할 수 없다.
-
-`external_popularity` 는 소스마다 의미가 다르다(TMDB 평가 수 / 알라딘 판매 지수).
-같은 `type` 안에서만 비교할 수 있다.
+- `GET /contents` 응답의 `total` 은 현재 페이지가 아니라 필터에 걸린 전체 개수다
+- `sort=rating` 은 평가 수 100 미만을 제외한다. 표본이 적은 평점은 신뢰할 수 없다
+- `external_popularity` 는 소스마다 의미가 다르다(TMDB 평가 수 / 알라딘 판매 지수).
+  같은 `type` 안에서만 비교할 수 있다
+- `unseen=1` 은 로그인했을 때만 동작한다. 비로그인이면 무시된다
 
 <br>
 
@@ -168,21 +145,13 @@ npm run typecheck
 npm run lint
 ```
 
-**E2E** — Playwright. 브라우저부터 DB 까지 실제로 관통하므로 **백엔드가 떠 있어야 한다.**
+**E2E** — Playwright. 브라우저부터 DB 까지 관통하므로 백엔드가 떠 있어야 한다.
 
 ```bash
-npx playwright install chromium    # 최초 1회, 브라우저 바이너리 약 115MB
+npx playwright install chromium    # 최초 1회
 
-cd backend && uv run uvicorn app.main:app --reload    # 다른 터미널에서
+cd backend && uv run uvicorn app.main:app --reload    # 다른 터미널
 cd web && npm run e2e
-```
-
-프론트 개발 서버는 Playwright 가 알아서 띄운다(이미 떠 있으면 재사용).
-
-E2E 는 실제 Neon 에 `e2e-...@example.com` 계정을 만들고 지우지 않는다. 쌓이면 정리한다.
-
-```sql
-DELETE FROM users WHERE email LIKE 'e2e-%@example.com';
 ```
 
 <br>
@@ -196,6 +165,5 @@ Vercel 프로젝트 2개. 같은 저장소에 Root Directory 만 다르게 잡�
 | API | `backend` |
 | 웹 | `web` |
 
-`backend/api/index.py` 가 Vercel 진입점이다. ruff 는 `per-file-ignores` 로 예외 처리했다.
+`backend/api/index.py` 가 Vercel 진입점
 
-<br>
