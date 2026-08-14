@@ -24,9 +24,11 @@ async function signUp(page: Page, email: string, nickname = "E2E") {
 }
 
 async function logOut(page: Page) {
+  await page.getByRole("button", { name: "내 계정" }).click();
+
   // 이미 / 에 있어 waitForURL 은 즉시 통과한다. 전체 새로고침 자체를 기다려야 한다
   const reloaded = page.waitForEvent("load");
-  await page.getByRole("button", { name: "로그아웃" }).click();
+  await page.getByRole("menuitem", { name: "로그아웃" }).click();
   await reloaded;
 
   await expect(page.locator("header").getByRole("link", { name: "로그인" })).toBeVisible();

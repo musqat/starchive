@@ -21,6 +21,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       }
       await logIn({ email, password });
       // router.push + refresh 는 경합이 있어 헤더가 갱신되지 않을 때가 있다
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/");
     } catch (e) {
       setError(e instanceof Error ? e.message : "요청에 실패했습니다");
@@ -28,9 +29,14 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
     }
   }
 
+  const field =
+    "rounded-lg border border-line bg-fill px-3 py-2.5 text-sm transition " +
+    "placeholder:text-muted hover:border-foreground/25 " +
+    "focus:border-foreground/50 focus:bg-transparent focus:outline-none";
+
   return (
-    <form action={submit} className="mx-auto flex max-w-sm flex-col gap-3 py-12">
-      <h1 className="mb-2 text-xl font-medium">{mode === "login" ? "로그인" : "가입"}</h1>
+    <form action={submit} className="mx-auto flex max-w-sm flex-col gap-2.5 py-12">
+      <h1 className="mb-3 text-xl font-medium">{mode === "login" ? "로그인" : "가입"}</h1>
 
       <input
         name="email"
@@ -38,7 +44,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         required
         placeholder="이메일"
         autoComplete="email"
-        className="rounded-lg border border-line bg-transparent px-3 py-2 text-sm placeholder:text-muted focus:outline-none"
+        className={field}
       />
 
       {mode === "signup" && (
@@ -47,7 +53,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           required
           maxLength={30}
           placeholder="닉네임"
-          className="rounded-lg border border-line bg-transparent px-3 py-2 text-sm placeholder:text-muted focus:outline-none"
+          className={field}
         />
       )}
 
@@ -58,17 +64,23 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         minLength={8}
         placeholder="비밀번호 (8자 이상)"
         autoComplete={mode === "login" ? "current-password" : "new-password"}
-        className="rounded-lg border border-line bg-transparent px-3 py-2 text-sm placeholder:text-muted focus:outline-none"
+        className={field}
       />
 
-      {error && <p className="text-[13px] text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-400">
+          {error}
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-foreground px-3 py-2 text-sm text-background disabled:opacity-50"
+        className="mt-1 rounded-lg bg-foreground px-3 py-2.5 text-sm font-medium text-background transition
+                   hover:bg-foreground/85 active:scale-[0.99]
+                   disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {pending ? "처리 중" : mode === "login" ? "로그인" : "가입"}
+        {pending ? "처리 중…" : mode === "login" ? "로그인" : "가입"}
       </button>
     </form>
   );
