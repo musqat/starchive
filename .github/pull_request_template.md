@@ -1,10 +1,13 @@
-## 제목
-
 ## 작업 내용
 
+**backend/**
 
-## 확인
+- [ ] `uv run pytest -q`
+- [ ] `uv run ruff check .`
 
-- [ ] `cd backend && uv run pytest -q` 통과
+**web/**
+
+- [ ] `npm run typecheck`
+- [ ] `npm run lint`
+- [ ] `npm run e2e` 
 - [ ] Vercel 프리뷰 Ready
-- [ ] `uv run ruff check .` 통과
