@@ -17,6 +17,17 @@ class LoginIn(BaseModel):
     password: str
 
 
+class PasswordChangeIn(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=72)
+
+
+class WithdrawIn(BaseModel):
+    """탈퇴는 되돌릴 수 없어 비밀번호로 한 번 더 확인"""
+
+    password: str
+
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,9 +38,10 @@ class UserOut(BaseModel):
 
 
 class RecordIn(BaseModel):
-    """status 또는 recommended 중 보낸 것만 바꿈"""
+    """보낸 필드만 바꿈"""
 
     status: ContentStatus | None = None
+    rating: int | None = Field(None, ge=1, le=5)
     recommended: bool | None = None
 
 
@@ -38,6 +50,7 @@ class RecordOut(BaseModel):
 
     content_id: str
     status: ContentStatus
+    rating: int | None
     recommended: bool
     updated_at: datetime
 

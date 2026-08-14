@@ -31,13 +31,13 @@ test("기록이 없으면 빈 상태가 보인다", async ({ page }) => {
   await expect(page.getByText("아직 기록이 없습니다")).toBeVisible();
 });
 
-test("헤더의 닉네임으로 서재에 들어간다", async ({ page }) => {
+test("헤더의 보관함으로 들어간다", async ({ page }) => {
   await signUp(page, "서재이동");
 
-  await page.locator("header").getByRole("link", { name: "서재이동" }).click();
+  await page.locator("header").getByRole("link", { name: "보관함" }).click();
 
   await expect(page).toHaveURL("/library");
-  await expect(page.getByRole("heading", { name: "내 서재" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "보관함" })).toBeVisible();
 });
 
 test("기록을 남기면 서재에 나오고 상태 탭으로 걸러진다", async ({ page }) => {

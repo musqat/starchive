@@ -1,21 +1,53 @@
 import Image from "next/image";
 
+import DetailActions from "@/components/DetailActions";
 import type { ContentDetail } from "@/lib/types";
 
+/** 매체별로 다른 필드. 없으면 그 줄이 그려지지 않는다 */
+type Meta = {
+  runtime?: number;
+  cast?: string[];
+  original_title?: string;
+  publisher?: string;
+  author?: string;
+};
+
 export default function ContentDetailView({ item }: { item: ContentDetail }) {
+  const meta = item.content_metadata as Meta;
+  const isMovie = item.type === "MOVIE";
+
+  const subtitle = [
+    item.creator,
+    item.release_date,
+    meta.runtime ? `${meta.runtime}분` : null,
+  ].filter(Boolean);
+
+  const people = isMovie ? meta.cast?.join(", ") : meta.author;
+
   return (
-    <article className="grid gap-6 sm:grid-cols-[180px_1fr]">
-      <div className="relative aspect-[2/3] w-full max-w-[180px] overflow-hidden rounded-lg bg-fill">
-        {item.image_url && (
-          <Image src={item.image_url} alt="" fill sizes="180px" className="object-cover" />
-        )}
+    <article className="grid gap-6 sm:grid-cols-[140px_1fr]">
+      <div>
+        <div className="relative aspect-[2/3] w-full max-w-[140px] overflow-hidden rounded-lg bg-fill">
+          {item.image_url && (
+            <Image src={item.image_url} alt="" fill sizes="140px" className="object-cover" />
+          )}
+        </div>
+        <DetailActions item={item} />
       </div>
 
       <div>
         <h1 className="text-xl font-medium">{item.title}</h1>
-        <p className="mt-1 text-[13px] text-muted">
-          {[item.creator, item.release_date].filter(Boolean).join(" · ")}
-        </p>
+
+        {subtitle.length > 0 && (
+          <p className="mt-1 text-[13px] text-muted">{subtitle.join(" · ")}</p>
+        )}
+
+        {isMovie && meta.original_title && (
+          <p className="text-xs text-muted/70">{meta.original_title}</p>
+        )}
+        {!isMovie && meta.publisher && (
+          <p className="text-xs text-muted/70">{meta.publisher}</p>
+        )}
 
         {item.genre && item.genre.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -36,6 +68,13 @@ export default function ContentDetailView({ item }: { item: ContentDetail }) {
             </span>
           )}
         </p>
+
+        {people && (
+          <div className="mt-4 border-t border-line pt-3">
+            <p className="text-[11px] text-muted">{isMovie ? "출연" : "참여"}</p>
+            <p className="mt-0.5 text-[13px]">{people}</p>
+          </div>
+        )}
 
         {item.description && (
           <p className="mt-4 text-sm leading-7 text-muted">{item.description}</p>

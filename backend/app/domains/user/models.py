@@ -40,7 +40,8 @@ class UserContent(Base):
     )
 
     status: Mapped[ContentStatus] = mapped_column(SAEnum(ContentStatus, name="content_status"))
-    recommended: Mapped[bool] = mapped_column(Boolean, default=False)  # 켜지면 status 도 DONE
+    rating: Mapped[int | None]  # 내 평점 1~5
+    recommended: Mapped[bool] = mapped_column(Boolean, default=False)  # 추천
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
@@ -48,5 +49,6 @@ class UserContent(Base):
 
     __table_args__ = (
         Index("ix_user_contents_user_updated", "user_id", "updated_at"),  # 내 서재
-        Index("ix_user_contents_recommended", "user_id", "recommended"),  # 추천 신호
+        Index("ix_user_contents_rating", "user_id", "rating"),  # 개인화 추천 입력
+        Index("ix_user_contents_recommended", "user_id", "recommended"),  # 커뮤니티 신호
     )

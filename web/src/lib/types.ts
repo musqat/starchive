@@ -8,6 +8,11 @@ export type ContentSummary = {
   genre: string[] | null;
   image_url: string | null;
   external_rating: number | null;
+
+  // 로그인했을 때만 채워진다
+  my_status: ContentStatus | null;
+  my_rating: number | null;
+  my_recommended: boolean;
 };
 
 export type ContentDetail = ContentSummary & {
@@ -39,6 +44,7 @@ export type User = {
 export type ContentRecord = {
   content_id: string;
   status: ContentStatus;
+  rating: number | null;
   recommended: boolean;
   updated_at: string;
 };
