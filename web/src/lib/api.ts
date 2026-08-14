@@ -19,6 +19,7 @@ type ListParams = {
   genre?: string;
   sort?: SortKey;
   order?: SortOrder;
+  unseen?: boolean;
   page?: number;
   size?: number;
 };
