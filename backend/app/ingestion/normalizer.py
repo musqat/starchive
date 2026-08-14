@@ -26,6 +26,41 @@ def _cast(data: dict, limit: int = 5) -> list[str]:
     return [c["name"] for c in cast[:limit]]
 
 
+WATCH_REGION = "KR"
+PROVIDER_LIMIT = 6
+
+
+def _providers(data: dict) -> dict | None:
+    """TMDB watch/providers 의 한국 것만.
+
+    JustWatch 자료라 약관상 개별 서비스로 바로 보내면 안 되고
+    함께 오는 link(JustWatch 페이지)로 보내야 한다
+    """
+    region = data.get("watch/providers", {}).get("results", {}).get(WATCH_REGION)
+    if not region:
+        return None
+
+    seen: dict[int, dict] = {}
+    # flatrate(구독) 를 먼저 넣어 대여·구매보다 앞에 오게 한다
+    for kind in ("flatrate", "rent", "buy"):
+        for item in region.get(kind, []):
+            seen.setdefault(
+                item["provider_id"],
+                {
+                    "name": item["provider_name"],
+                    "logo_path": item.get("logo_path"),
+                    "kind": kind,
+                },
+            )
+
+    if not seen:
+        return None
+    return {
+        "link": region.get("link"),
+        "items": list(seen.values())[:PROVIDER_LIMIT],
+    }
+
+
 def _author(raw: str | None) -> str | None:
     """알라딘 author 는 '세네카 (지은이), 하와이 대저택 (편역)' 형태. 지은이만 추출
 
@@ -76,6 +111,7 @@ def normalize_movie(data: dict) -> dict:
             "original_title": data.get("original_title"),
             "tagline": data.get("tagline"),
             "backdrop_path": data.get("backdrop_path"),
+            "providers": _providers(data),
         },
     }
 

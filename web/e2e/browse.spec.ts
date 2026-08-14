@@ -57,3 +57,28 @@ test("없는 콘텐츠는 404", async ({ page }) => {
 
   expect(res?.status()).toBe(404);
 });
+
+test("드로어에서 페이지로 열 수 있다", async ({ page }) => {
+  await page.goto("/movies");
+  await page.locator('a[href^="/contents/"]').first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+
+  await page.getByRole("link", { name: "페이지로 열기" }).click();
+
+  await expect(page).toHaveURL(/\/contents\//);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("영화 상세에 볼 수 있는 곳이 나온다", async ({ page }) => {
+  await page.goto("/contents/tmdb_157336");
+
+  await expect(page.getByText("볼 수 있는 곳")).toBeVisible();
+  await expect(page.getByRole("link", { name: "보러 가기" })).toBeVisible();
+});
+
+test("책 상세에 알라딘 링크가 나온다", async ({ page }) => {
+  await page.goto("/contents/aladin_9788937460586");
+
+  const link = page.getByRole("link", { name: /알라딘에서 보기/ });
+  await expect(link).toHaveAttribute("href", /aladin\.co\.kr/);
+});
