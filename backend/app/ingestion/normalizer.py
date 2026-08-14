@@ -20,6 +20,12 @@ def _director(data: dict) -> str | None:
     return ", ".join(c["name"] for c in crew if c.get("job") == "Director") or None
 
 
+def _cast(data: dict, limit: int = 5) -> list[str]:
+    """credits.cast 는 비중 순으로 정렬돼 있다. 앞쪽 몇 명만"""
+    cast = data.get("credits", {}).get("cast", [])
+    return [c["name"] for c in cast[:limit]]
+
+
 def _author(raw: str | None) -> str | None:
     """알라딘 author 는 '세네카 (지은이), 하와이 대저택 (편역)' 형태. 지은이만 추출
 
@@ -66,6 +72,7 @@ def normalize_movie(data: dict) -> dict:
         "external_popularity": data.get("vote_count"),
         "content_metadata": {
             "runtime": data.get("runtime"),
+            "cast": _cast(data),
             "original_title": data.get("original_title"),
             "tagline": data.get("tagline"),
             "backdrop_path": data.get("backdrop_path"),

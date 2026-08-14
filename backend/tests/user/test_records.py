@@ -55,8 +55,9 @@ def test_library_filters(auth_client):
     auth_client.put(f"/me/records/{BOOK}", json={"status": "DONE"})
 
     lib = auth_client.get("/me/library", params={"type": "MOVIE"}).json()
-    assert [x["content_id"] for x in lib] == [MOVIE]\
-    
+    assert [x["content_id"] for x in lib] == [MOVIE]
+
+
 @pytest.mark.db  # 삭제 → 204, 서재에서 사라짐
 def test_delete(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
@@ -66,3 +67,41 @@ def test_delete(auth_client):
 @pytest.mark.db  # 비로그인 → 401
 def test_requires_login(client):
     assert client.get("/me/library").status_code == 401
+
+@pytest.mark.db  # 평점을 매기면 status 도 DONE
+def test_rating_forces_done(auth_client):
+    r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": 4})
+
+    assert r.json()["status"] == "DONE"
+    assert r.json()["rating"] == 4
+
+
+@pytest.mark.db  # rating 과 recommended 는 독립
+def test_rating_and_recommended_independent(auth_client):
+    auth_client.put(f"/me/records/{MOVIE}", json={"rating": 5, "recommended": True})
+    r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": 2})
+
+    assert r.json()["rating"] == 2
+    assert r.json()["recommended"] is True
+
+
+@pytest.mark.db  # null 을 보내면 평점이 지워짐
+def test_rating_cleared_by_null(auth_client):
+    auth_client.put(f"/me/records/{MOVIE}", json={"rating": 3})
+    r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": None})
+
+    assert r.json()["rating"] is None
+    assert r.json()["status"] == "DONE"  # 봤다는 사실은 남는다
+
+
+@pytest.mark.db  # 1~5 밖 → 422
+@pytest.mark.parametrize("value", [0, 6])
+def test_rating_out_of_range(auth_client, value):
+    assert auth_client.put(f"/me/records/{MOVIE}", json={"rating": value}).status_code == 422
+
+
+@pytest.mark.db  # 상세에 my_rating 이 붙음
+def test_my_rating_attached(auth_client):
+    auth_client.put(f"/me/records/{MOVIE}", json={"rating": 4})
+
+    assert auth_client.get(f"/contents/{MOVIE}").json()["my_rating"] == 4

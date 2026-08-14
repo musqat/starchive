@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import SeenToggle from "@/components/SeenToggle";
+import StatusToggle from "@/components/StatusToggle";
 import type { ContentSummary } from "@/lib/types";
 
 export default function ContentCard({ item }: { item: ContentSummary }) {
   return (
     <div className="group relative">
-      <SeenToggle id={item.id} label={item.title} />
+      <StatusToggle item={item} />
       <Link href={`/contents/${item.id}`} className="block">
         <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-fill">
           {item.image_url ? (

@@ -27,7 +27,13 @@ def list_library(
         stmt = stmt.join(Content).where(Content.type == type)
     stmt = stmt.order_by(UserContent.updated_at.desc()).offset((page - 1) * size).limit(size)
 
-    return db.scalars(stmt).unique().all()
+    records = db.scalars(stmt).unique().all()
+    # 카드가 체크 상태를 그리려면 content 안에도 같은 값이 있어야 한다
+    for record in records:
+        record.content.my_status = record.status
+        record.content.my_rating = record.rating
+        record.content.my_recommended = record.recommended
+    return records
 
 @router.put("/records/{content_id}", response_model=RecordOut)
 def upsert_record(
@@ -36,7 +42,7 @@ def upsert_record(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """recommended=True 면 status 도 DONE 으로 변경"""
+    """rating 이나 recommended 가 있으면 status 도 DONE 으로 변경"""
 
     if not db.get(Content, content_id):
         raise HTTPException(status_code=404, detail="Content not found")
@@ -50,7 +56,10 @@ def upsert_record(
         record.status = payload.status
     if payload.recommended is not None:
         record.recommended = payload.recommended
-    if record.recommended:
+    # rating 은 null 을 보내 지울 수 있어야 하므로 전송 여부로 판단한다
+    if "rating" in payload.model_fields_set:
+        record.rating = payload.rating
+    if record.rating or record.recommended:
         record.status = ContentStatus.DONE
     db.commit()
     db.refresh(record)

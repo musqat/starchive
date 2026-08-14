@@ -3,6 +3,7 @@ from datetime import date
 from pydantic import BaseModel, ConfigDict
 
 from app.domains.content.models import ContentType
+from app.domains.user.models import ContentStatus
 
 _SUMMARY_EXAMPLE = {
     "id": "tmdb_278",
@@ -30,6 +31,11 @@ class ContentSummary(BaseModel):
     genre: list[str] | None
     image_url: str | None
     external_rating: float | None
+
+    # 로그인했을 때만 채워진다
+    my_status: ContentStatus | None = None
+    my_rating: int | None = None
+    my_recommended: bool = False
 
 
 class ContentDetail(ContentSummary):

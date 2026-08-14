@@ -5,13 +5,34 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.core.deps import get_current_user_optional
 from app.domains.content.models import Content, ContentType
 from app.domains.content.schemas import ContentDetail, ContentPage
+from app.domains.user.models import User, UserContent
 
 router = APIRouter(prefix="/contents", tags=["contents"])
 
 # 표본이 적으면 평점을 신뢰할 수 없음
 MIN_VOTES_FOR_RATING_SORT = 100
+
+
+def attach_records(db: Session, user: User | None, items: list[Content]) -> list[Content]:
+    """응답 스키마의 my_* 필드를 채운다. 비로그인이면 기본값"""
+    if not user or not items:
+        return items
+
+    stmt = select(UserContent).where(
+        UserContent.user_id == user.id,
+        UserContent.content_id.in_([c.id for c in items]),
+    )
+    records = {r.content_id: r for r in db.scalars(stmt).unique()}
+
+    for content in items:
+        record = records.get(content.id)
+        content.my_status = record.status if record else None
+        content.my_rating = record.rating if record else None
+        content.my_recommended = record.recommended if record else False
+    return items
 
 
 class SortKey(enum.StrEnum):
@@ -52,13 +73,15 @@ def list_contents(
     genre: str | None = Query(None, description="장르 정확히 일치", examples=["드라마"]),
     sort: SortKey = Query(SortKey.POPULAR, description="popular / rating / recent"),
     order: SortOrder = Query(SortOrder.DESC, description="desc / asc"),
+    unseen: bool = Query(False, description="내가 기록한 것 제외. 비로그인이면 무시"),
     page: int = Query(1, ge=1, description="1 부터"),
     size: int = Query(20, ge=1, le=100, description="한 페이지 개수"),
+    user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """`total` 은 페이지가 아니라 필터 전체의 개수
-
-    `sort=rating` 은 평가 수가 적은 항목을 제외
+    """
+    total 은 페이지가 아니라 필터 전체의 개수
+    sort=rating 은 평가 수가 적은 항목을 제외
     """
     stmt = select(Content)
     if q:
@@ -69,6 +92,9 @@ def list_contents(
         stmt = stmt.where(Content.genre.any(genre))
     if sort is SortKey.RATING:
         stmt = stmt.where(Content.external_popularity >= MIN_VOTES_FOR_RATING_SORT)
+    if unseen and user:
+        seen = select(UserContent.content_id).where(UserContent.user_id == user.id)
+        stmt = stmt.where(Content.id.not_in(seen))
 
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
 
@@ -76,7 +102,7 @@ def list_contents(
     ordering = column.asc() if order is SortOrder.ASC else column.desc()
     stmt = stmt.order_by(ordering.nulls_last()).offset((page - 1) * size).limit(size)
     return {
-        "items": db.scalars(stmt).all(),
+        "items": attach_records(db, user, list(db.scalars(stmt).all())),
         "total": total,
         "page": page,
         "size": size,
@@ -90,9 +116,10 @@ def list_contents(
 )
 def get_content(
     content_id: str = Path(..., description="목록 응답의 id", examples=["tmdb_278"]),
+    user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
     row = db.get(Content, content_id)
     if row is None:
         raise HTTPException(404, "content not found")
-    return row
+    return attach_records(db, user, [row])[0]

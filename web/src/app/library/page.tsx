@@ -25,7 +25,7 @@ export default async function LibraryPage({
 
   return (
     <>
-      <h1 className="mb-4 text-[15px] font-medium">내 서재</h1>
+      <h1 className="mb-4 text-[15px] font-medium">보관함</h1>
 
       <div className="mb-5 flex flex-wrap gap-2">
         {TABS.map((tab) => (

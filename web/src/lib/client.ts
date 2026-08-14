@@ -31,9 +31,17 @@ export function logOut() {
   return request<void>("/auth/logout", { method: "POST" });
 }
 
+export function changePassword(body: { current_password: string; new_password: string }) {
+  return request<void>("/auth/password", { method: "PATCH", body: JSON.stringify(body) });
+}
+
+export function withdraw(body: { password: string }) {
+  return request<void>("/auth/withdraw", { method: "POST", body: JSON.stringify(body) });
+}
+
 export function putRecord(
   contentId: string,
-  body: { status?: ContentStatus; recommended?: boolean },
+  body: { status?: ContentStatus; rating?: number | null; recommended?: boolean },
 ) {
   return request<ContentRecord>(`/me/records/${encodeURIComponent(contentId)}`, {
     method: "PUT",
