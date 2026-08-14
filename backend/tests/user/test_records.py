@@ -105,3 +105,40 @@ def test_my_rating_attached(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"rating": 4})
 
     assert auth_client.get(f"/contents/{MOVIE}").json()["my_rating"] == 4
+
+@pytest.mark.db  # 좋아요를 켜면 status 도 DONE
+def test_liked_forces_done(auth_client):
+    r = auth_client.put(f"/me/records/{MOVIE}", json={"liked": True})
+
+    assert r.json()["liked"] is True
+    assert r.json()["status"] == "DONE"
+
+
+@pytest.mark.db  # 좋아요·평점·추천은 서로 독립
+def test_liked_independent(auth_client):
+    auth_client.put(f"/me/records/{MOVIE}", json={"liked": True, "recommended": True, "rating": 5})
+    r = auth_client.put(f"/me/records/{MOVIE}", json={"liked": False})
+
+    body = r.json()
+    assert body["liked"] is False
+    assert body["recommended"] is True
+    assert body["rating"] == 5
+
+
+@pytest.mark.db  # 상세에 my_liked 가 붙음
+def test_my_liked_attached(auth_client):
+    auth_client.put(f"/me/records/{MOVIE}", json={"liked": True})
+
+    assert auth_client.get(f"/contents/{MOVIE}").json()["my_liked"] is True
+
+
+@pytest.mark.db  # 보관함을 liked·recommended 로 거름
+def test_library_filters_by_signal(auth_client):
+    auth_client.put(f"/me/records/{MOVIE}", json={"liked": True})
+    auth_client.put(f"/me/records/{BOOK}", json={"recommended": True})
+
+    liked = auth_client.get("/me/library", params={"liked": True}).json()
+    recommended = auth_client.get("/me/library", params={"recommended": True}).json()
+
+    assert [x["content_id"] for x in liked] == [MOVIE]
+    assert [x["content_id"] for x in recommended] == [BOOK]

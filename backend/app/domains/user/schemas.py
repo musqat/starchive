@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.domains.content.schemas import ContentSummary
-from app.domains.user.models import ContentStatus
+from app.domains.user.models import MEMO_MAX_LENGTH, ContentStatus
 
 
 class SignUpIn(BaseModel):
@@ -42,7 +42,10 @@ class RecordIn(BaseModel):
 
     status: ContentStatus | None = None
     rating: int | None = Field(None, ge=1, le=5)
+    liked: bool | None = None
     recommended: bool | None = None
+    memo: str | None = Field(None, max_length=MEMO_MAX_LENGTH)
+    memo_public: bool | None = None
 
 
 class RecordOut(BaseModel):
@@ -51,7 +54,10 @@ class RecordOut(BaseModel):
     content_id: str
     status: ContentStatus
     rating: int | None
+    liked: bool
     recommended: bool
+    memo: str | None
+    memo_public: bool
     updated_at: datetime
 
 

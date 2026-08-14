@@ -40,14 +40,14 @@ test("헤더의 보관함으로 들어간다", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "보관함" })).toBeVisible();
 });
 
-test("기록을 남기면 서재에 나오고 상태 탭으로 걸러진다", async ({ page }) => {
+test("기록을 남기면 서재에 나오고 탭으로 걸러진다", async ({ page }) => {
   await signUp(page);
 
-  // 카드 토글 UI 는 아직 없어서 API 로 직접 남긴다
+  // 두 항목을 다르게 표시해야 탭이 갈리는지 볼 수 있다
   const put = (id: string, body: object) =>
     page.evaluate(
       ([contentId, payload]) =>
-        fetch(`http://localhost:8000/me/records/${contentId}`, {
+        fetch(`/api/me/records/${contentId}`, {
           method: "PUT",
           credentials: "include",
           headers: { "content-type": "application/json" },
@@ -56,7 +56,7 @@ test("기록을 남기면 서재에 나오고 상태 탭으로 걸러진다", as
       [id, body] as const,
     );
 
-  expect(await put("tmdb_157336", { status: "WISH" })).toBe(200);
+  expect(await put("tmdb_157336", { liked: true })).toBe(200);
   expect(await put("aladin_9788937460586", { recommended: true })).toBe(200);
 
   await page.goto("/library");
@@ -64,13 +64,13 @@ test("기록을 남기면 서재에 나오고 상태 탭으로 걸러진다", as
   await expect(page.locator("main")).toContainText("싯다르타");
 
   // 이동이 끝나기 전에 단언하면 직전 목록을 보게 된다
-  await page.getByRole("link", { name: "보고싶어요" }).click();
-  await page.waitForURL("/library?status=WISH");
+  await page.getByRole("link", { name: "좋아요" }).click();
+  await page.waitForURL("/library?filter=liked");
   await expect(page.locator("main")).toContainText("인터스텔라");
   await expect(page.locator("main")).not.toContainText("싯다르타");
 
-  await page.getByRole("link", { name: "봤어요" }).click();
-  await page.waitForURL("/library?status=DONE");
+  await page.getByRole("link", { name: "추천해요" }).click();
+  await page.waitForURL("/library?filter=recommended");
   await expect(page.locator("main")).toContainText("싯다르타");
   await expect(page.locator("main")).not.toContainText("인터스텔라");
 });

@@ -12,6 +12,7 @@ export type ContentSummary = {
   // 로그인했을 때만 채워진다
   my_status: ContentStatus | null;
   my_rating: number | null;
+  my_liked: boolean;
   my_recommended: boolean;
 };
 
@@ -20,6 +21,17 @@ export type ContentDetail = ContentSummary & {
   release_date: string | null;
   external_popularity: number | null;
   content_metadata: Record<string, unknown>;
+
+  // 메모는 상세에만 실린다
+  my_memo: string | null;
+  my_memo_public: boolean;
+};
+
+export type PublicMemo = {
+  nickname: string;
+  memo: string;
+  rating: number | null;
+  updated_at: string;
 };
 
 export type ContentPage = {
@@ -45,7 +57,10 @@ export type ContentRecord = {
   content_id: string;
   status: ContentStatus;
   rating: number | null;
+  liked: boolean;
   recommended: boolean;
+  memo: string | null;
+  memo_public: boolean;
   updated_at: string;
 };
 

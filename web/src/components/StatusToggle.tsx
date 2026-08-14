@@ -10,6 +10,7 @@ import type { ContentStatus, ContentSummary } from "@/lib/types";
 type State = {
   status: ContentStatus | null;
   rating: number | null;
+  liked: boolean;
   recommended: boolean;
 };
 
@@ -20,6 +21,7 @@ export default function StatusToggle({ item }: { item: ContentSummary }) {
   const [state, setState] = useState<State>({
     status: item.my_status,
     rating: item.my_rating,
+    liked: item.my_liked,
     recommended: item.my_recommended,
   });
   const latest = useRef(state);
@@ -53,7 +55,7 @@ export default function StatusToggle({ item }: { item: ContentSummary }) {
   const toggleSeen = (e: React.MouseEvent) =>
     apply(e, (prev) =>
       prev.status === "DONE"
-        ? { status: null, rating: null, recommended: false }
+        ? { status: null, rating: null, liked: false, recommended: false }
         : { ...prev, status: "DONE" },
     );
 

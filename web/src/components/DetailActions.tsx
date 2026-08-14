@@ -10,6 +10,7 @@ import type { ContentDetail, ContentStatus } from "@/lib/types";
 type State = {
   status: ContentStatus | null;
   rating: number | null;
+  liked: boolean;
   recommended: boolean;
 };
 
@@ -20,6 +21,7 @@ export default function DetailActions({ item }: { item: ContentDetail }) {
   const [state, setState] = useState<State>({
     status: item.my_status,
     rating: item.my_rating,
+    liked: item.my_liked,
     recommended: item.my_recommended,
   });
   const latest = useRef(state);
@@ -56,15 +58,18 @@ export default function DetailActions({ item }: { item: ContentDetail }) {
   const toggleSeen = () =>
     apply((prev) =>
       prev.status === "DONE"
-        ? { status: null, rating: null, recommended: false }
+        ? { status: null, rating: null, liked: false, recommended: false }
         : { ...prev, status: "DONE" },
     );
+
+  const toggleLiked = () =>
+    apply((prev) => ({ ...prev, liked: !prev.liked, status: "DONE" }));
 
   const toggleRecommended = () =>
     apply((prev) => ({ ...prev, recommended: !prev.recommended, status: "DONE" }));
 
   return (
-    <div className="mt-3">
+    <div className="mt-4 border-t border-line pt-3">
       <p className="mb-1 text-[11px] text-muted">내 평점</p>
       <div className="mb-3 flex gap-0.5">
         {STARS.map((n) => (
@@ -88,9 +93,14 @@ export default function DetailActions({ item }: { item: ContentDetail }) {
           ✓ {statusLabel(item.type, "DONE")}
         </Action>
         {seen && (
-          <Action active={state.recommended} onClick={toggleRecommended}>
-            👍 추천해요
-          </Action>
+          <>
+            <Action active={state.liked} onClick={toggleLiked}>
+              ♥ 좋아요
+            </Action>
+            <Action active={state.recommended} onClick={toggleRecommended}>
+              👍 추천해요
+            </Action>
+          </>
         )}
       </div>
 
