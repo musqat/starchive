@@ -1,4 +1,4 @@
-import type { ContentType } from "@/lib/api";
+import type { ContentType } from "@/lib/types";
 
 const SCOPES: { value: string; label: string }[] = [
   { value: "", label: "통합" },

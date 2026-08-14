@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { SortKey, SortOrder } from "@/lib/api";
+import type { SortKey, SortOrder } from "@/lib/types";
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "popular", label: "인기순" },

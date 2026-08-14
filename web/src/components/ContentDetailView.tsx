@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import type { ContentDetail } from "@/lib/api";
+import type { ContentDetail } from "@/lib/types";
 
 export default function ContentDetailView({ item }: { item: ContentDetail }) {
   return (

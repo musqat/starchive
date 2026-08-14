@@ -29,10 +29,11 @@ starchive/
 │   │   └── ingestion/     수집 정규화
 │   └── scripts/           수집 실행 스크립트
 └── web/        Next.js 16 · Tailwind 4
+    ├── e2e/           Playwright
     └── src/
         ├── app/           라우트
         ├── components/    UI
-        └── lib/           API 클라이언트
+        └── lib/           타입, API 클라이언트
 ```
 
 **DB** — Neon(Postgres). `pgvector` 확장을 켜뒀고 임베딩 컬럼이 비어 있는 상태다.
@@ -145,6 +146,8 @@ uv run python -m scripts.ingest_books     # 3분
 
 ## 테스트
 
+**백엔드** — pytest. FastAPI 를 같은 프로세스에서 호출한다.
+
 ```bash
 cd backend
 uv run pytest -q -m "not db and not external"    # 빠른 것만
@@ -157,10 +160,29 @@ uv run pytest -q                                  # 전체
 | `db` | Neon 연결 |
 | `external` | TMDB · 알라딘 API |
 
+**프론트** — 타입·린트.
+
 ```bash
 cd web
-npx tsc --noEmit
-npx eslint .
+npm run typecheck
+npm run lint
+```
+
+**E2E** — Playwright. 브라우저부터 DB 까지 실제로 관통하므로 **백엔드가 떠 있어야 한다.**
+
+```bash
+npx playwright install chromium    # 최초 1회, 브라우저 바이너리 약 115MB
+
+cd backend && uv run uvicorn app.main:app --reload    # 다른 터미널에서
+cd web && npm run e2e
+```
+
+프론트 개발 서버는 Playwright 가 알아서 띄운다(이미 떠 있으면 재사용).
+
+E2E 는 실제 Neon 에 `e2e-...@example.com` 계정을 만들고 지우지 않는다. 쌓이면 정리한다.
+
+```sql
+DELETE FROM users WHERE email LIKE 'e2e-%@example.com';
 ```
 
 <br>
@@ -174,13 +196,6 @@ Vercel 프로젝트 2개. 같은 저장소에 Root Directory 만 다르게 잡�
 | API | `backend` |
 | 웹 | `web` |
 
-`backend/api/index.py` 가 Vercel 진입점이다. `app` 을 재노출하는 것이 역할이라
-정적 분석에서는 미사용으로 잡힌다. ruff 는 `per-file-ignores` 로 예외 처리했다.
+`backend/api/index.py` 가 Vercel 진입점이다. ruff 는 `per-file-ignores` 로 예외 처리했다.
 
 <br>
-
-## 앞으로
-
-- [ ] 사용자 · 인증 — 본 것 체크가 현재 localStorage 에만 저장된다
-- [ ] 임베딩 기반 추천 — `embedding` 컬럼이 비어 있다
-- [ ] 의미 장르 — TMDB 는 정서 장르, 알라딘은 서가 분류라 매체 간 장르가 겹치지 않는다

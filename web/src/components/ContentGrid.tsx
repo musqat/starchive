@@ -1,5 +1,5 @@
 import ContentCard from "@/components/ContentCard";
-import type { ContentSummary } from "@/lib/api";
+import type { ContentSummary } from "@/lib/types";
 
 export default function ContentGrid({ items }: { items: ContentSummary[] }) {
   return (

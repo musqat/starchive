@@ -1,13 +1,8 @@
 import ContentGrid from "@/components/ContentGrid";
 import Filters from "@/components/Filters";
 import Pagination from "@/components/Pagination";
-import {
-  getContents,
-  getGenres,
-  type ContentType,
-  type SortKey,
-  type SortOrder,
-} from "@/lib/api";
+import { getContents, getGenres } from "@/lib/api";
+import type { ContentType, SortKey, SortOrder } from "@/lib/types";
 
 const SIZE = 20;
 

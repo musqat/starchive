@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import Carousel from "@/components/Carousel";
 import ContentCard from "@/components/ContentCard";
-import { getContents, type ContentType } from "@/lib/api";
+import { getContents } from "@/lib/api";
+import type { ContentType } from "@/lib/types";
 
 const SIZE = 10;
 

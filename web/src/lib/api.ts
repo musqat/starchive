@@ -1,33 +1,17 @@
+import { cookies } from "next/headers";
+
+import type {
+  ContentDetail,
+  ContentPage,
+  ContentStatus,
+  ContentType,
+  LibraryItem,
+  SortKey,
+  SortOrder,
+  User,
+} from "@/lib/types";
+
 const BASE = process.env.NEXT_PUBLIC_API_URL;
-
-export type ContentType = "MOVIE" | "BOOK" | "WEBTOON";
-
-export type ContentSummary = {
-  id: string;
-  type: ContentType;
-  title: string;
-  creator: string | null;
-  genre: string[] | null;
-  image_url: string | null;
-  external_rating: number | null;
-};
-
-export type ContentDetail = ContentSummary & {
-  description: string | null;
-  release_date: string | null;
-  external_popularity: number | null;
-  content_metadata: Record<string, unknown>;
-};
-
-export type ContentPage = {
-  items: ContentSummary[];
-  total: number;
-  page: number;
-  size: number;
-};
-
-export type SortKey = "popular" | "rating" | "recent";
-export type SortOrder = "desc" | "asc";
 
 type ListParams = {
   type?: ContentType;
@@ -39,15 +23,7 @@ type ListParams = {
   size?: number;
 };
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`${res.status} ${path}`);
-  }
-  return res.json();
-}
-
-export function getContents(params: ListParams = {}): Promise<ContentPage> {
+function toQuery(params: Record<string, unknown>): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== "") {
@@ -55,7 +31,23 @@ export function getContents(params: ListParams = {}): Promise<ContentPage> {
     }
   }
   const qs = query.toString();
-  return get<ContentPage>(`/contents${qs ? `?${qs}` : ""}`);
+  return qs ? `?${qs}` : "";
+}
+
+/** 서버 컴포넌트는 브라우저 쿠키를 자동으로 넘기지 않아 직접 실어야 한다 */
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    cache: "no-store",
+    headers: { cookie: (await cookies()).toString() },
+  });
+  if (!res.ok) {
+    throw new Error(`${res.status} ${path}`);
+  }
+  return res.json();
+}
+
+export function getContents(params: ListParams = {}): Promise<ContentPage> {
+  return get<ContentPage>(`/contents${toQuery(params)}`);
 }
 
 export function getContent(id: string): Promise<ContentDetail> {
@@ -64,4 +56,15 @@ export function getContent(id: string): Promise<ContentDetail> {
 
 export function getGenres(type: ContentType): Promise<string[]> {
   return get<string[]>(`/contents/genres?type=${type}`);
+}
+
+/** 비로그인이면 null */
+export function getMe(): Promise<User | null> {
+  return get<User>("/auth/me").catch(() => null);
+}
+
+export function getLibrary(
+  params: { status?: ContentStatus; type?: ContentType; page?: number; size?: number } = {},
+): Promise<LibraryItem[]> {
+  return get<LibraryItem[]>(`/me/library${toQuery(params)}`);
 }

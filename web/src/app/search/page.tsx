@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import ContentGrid from "@/components/ContentGrid";
 import Pagination from "@/components/Pagination";
-import { getContents, type ContentType } from "@/lib/api";
+import { getContents } from "@/lib/api";
+import type { ContentType } from "@/lib/types";
 
 const SIZE = 20;
 
