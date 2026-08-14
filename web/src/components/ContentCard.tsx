@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import SeenToggle from "@/components/SeenToggle";
-import type { ContentSummary } from "@/lib/api";
+import type { ContentSummary } from "@/lib/types";
 
 export default function ContentCard({ item }: { item: ContentSummary }) {
   return (

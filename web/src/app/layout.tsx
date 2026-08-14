@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Geist } from "next/font/google";
 
 import SearchBox from "@/components/SearchBox";
+import UserMenu from "@/components/UserMenu";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,13 +41,7 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
               <SearchBox />
             </div>
 
-            <button
-              type="button"
-              aria-label="내 계정"
-              className="grid h-8 w-8 place-items-center rounded-full bg-fill text-xs text-muted"
-            >
-              ●
-            </button>
+            <UserMenu />
           </nav>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
