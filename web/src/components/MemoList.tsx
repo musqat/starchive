@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import Stars from "@/components/Stars";
 import type { LibraryItem } from "@/lib/types";
 
 /** 메모 탭 전용. 포스터만 늘어놓으면 정작 메모가 안 보인다 */
@@ -29,7 +30,7 @@ export default function MemoList({ items }: { items: LibraryItem[] }) {
               <p className="flex items-center gap-2 text-[13px]">
                 <span className="truncate font-medium">{item.content.title}</span>
                 {item.rating && (
-                  <span className="shrink-0 text-amber-400">{"★".repeat(item.rating)}</span>
+                  <Stars value={item.rating} size={13} />
                 )}
                 {item.memo_public && (
                   <span className="shrink-0 rounded-full bg-fill px-1.5 py-0.5 text-[10px] text-muted">

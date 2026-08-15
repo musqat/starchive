@@ -111,6 +111,7 @@ def list_contents(
         "size": size,
     }
 
+
 @router.get(
     "/{content_id}",
     response_model=ContentDetail,

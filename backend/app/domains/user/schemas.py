@@ -41,7 +41,7 @@ class RecordIn(BaseModel):
     """보낸 필드만 바꿈"""
 
     status: ContentStatus | None = None
-    rating: int | None = Field(None, ge=1, le=5)
+    rating: float | None = Field(None, ge=0.5, le=5, multiple_of=0.5)
     liked: bool | None = None
     recommended: bool | None = None
     memo: str | None = Field(None, max_length=MEMO_MAX_LENGTH)
@@ -53,7 +53,7 @@ class RecordOut(BaseModel):
 
     content_id: str
     status: ContentStatus
-    rating: int | None
+    rating: float | None
     liked: bool
     recommended: bool
     memo: str | None

@@ -14,6 +14,7 @@ def test_upsert_creates(auth_client):
     assert body["status"] == "WISH"
     assert body["recommended"] is False
 
+
 @pytest.mark.db  # recommended=true → status 도 DONE
 def test_recommend_forces_done(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
@@ -21,6 +22,7 @@ def test_recommend_forces_done(auth_client):
 
     assert r.json()["recommended"] is True
     assert r.json()["status"] == "DONE"
+
 
 @pytest.mark.db  # 보내지 않은 필드는 유지
 def test_partial_update(auth_client):
@@ -49,6 +51,7 @@ def test_unknown_content(auth_client):
     r = auth_client.put("/me/records/tmdb_123456780", json={"status": "WISH"})
     assert r.status_code == 404
 
+
 @pytest.mark.db  # status·type 으로 걸러짐
 def test_library_filters(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
@@ -64,9 +67,11 @@ def test_delete(auth_client):
     assert auth_client.delete(f"/me/records/{MOVIE}").status_code == 204
     assert auth_client.get("/me/library").json() == []
 
+
 @pytest.mark.db  # 비로그인 → 401
 def test_requires_login(client):
     assert client.get("/me/library").status_code == 401
+
 
 @pytest.mark.db  # 평점을 매기면 status 도 DONE
 def test_rating_forces_done(auth_client):
@@ -95,7 +100,7 @@ def test_rating_cleared_by_null(auth_client):
 
 
 @pytest.mark.db  # 1~5 밖 → 422
-@pytest.mark.parametrize("value", [0, 6])
+@pytest.mark.parametrize("value", [0, 6, 3.3])  # 범위 밖 + 0.5 단위 아님
 def test_rating_out_of_range(auth_client, value):
     assert auth_client.put(f"/me/records/{MOVIE}", json={"rating": value}).status_code == 422
 
@@ -105,6 +110,7 @@ def test_my_rating_attached(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"rating": 4})
 
     assert auth_client.get(f"/contents/{MOVIE}").json()["my_rating"] == 4
+
 
 @pytest.mark.db  # 좋아요를 켜면 status 도 DONE
 def test_liked_forces_done(auth_client):
@@ -142,3 +148,11 @@ def test_library_filters_by_signal(auth_client):
 
     assert [x["content_id"] for x in liked] == [MOVIE]
     assert [x["content_id"] for x in recommended] == [BOOK]
+
+
+@pytest.mark.db  # 0.5 단위 평점
+def test_rating_half_step(auth_client):
+    r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": 3.5})
+
+    assert r.json()["rating"] == 3.5
+    assert auth_client.get(f"/contents/{MOVIE}").json()["my_rating"] == 3.5

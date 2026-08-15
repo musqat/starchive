@@ -41,7 +41,7 @@ class Content(Base):
     # 임베딩
     embedding_text: Mapped[str | None] = mapped_column(Text)  # 임베딩에 넣은 정규화 텍스트
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1536))  # description 없으면 NULL
-    embedded_at: Mapped[datetime | None]  # 임베딩 시각. 
+    embedded_at: Mapped[datetime | None]  # 임베딩 시각.
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())  # 적재 시각
 

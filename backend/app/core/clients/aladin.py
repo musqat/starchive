@@ -4,6 +4,7 @@ from app.core.config import settings
 
 BASE = "https://www.aladin.co.kr/ttb/api"
 
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
 async def fetch_bestsellers(client, start: int, max_results: int = 50) -> list[dict]:
     params = {

@@ -1,4 +1,7 @@
 import pytest
+from sqlalchemy import create_engine, text
+
+from app.core.config import settings
 
 
 @pytest.mark.db  # 비밀번호 변경 → 새 비밀번호로 로그인됨
@@ -67,6 +70,46 @@ def test_withdraw_wrong_password(auth_client):
 def test_requires_login(client):
     assert client.post("/auth/withdraw", json={"password": "x"}).status_code == 401
     assert (
-        client.patch("/auth/password", json={"current_password": "x", "new_password": "y" * 8}).status_code
+        client.patch(
+            "/auth/password", json={"current_password": "x", "new_password": "y" * 8}
+        ).status_code
         == 401
     )
+
+
+@pytest.mark.db  # 시드 계정은 로그인할 수 없다
+def test_seed_cannot_log_in(client):
+    """ 세단계 블로킹
+    1. EmailStr 이 .invalid(예약 TLD) 를 주소 형식 단계에서 거부 → 422
+    2. 조회에 is_seed = false 필터
+    3. 비밀번호 해시로 임의 값
+    """
+    r = client.post(
+        "/auth/login",
+        json={"email": "seed-1@movielens.invalid", "password": "probe12345"},
+    )
+
+    assert r.status_code != 200
+    assert "access_token" not in r.cookies
+
+
+@pytest.mark.db  # is_seed 필터 자체를 확인한다
+def test_seed_filter_excludes_from_login(client, credentials):
+    """
+    2단계 필터링
+    - is_seed 면 로그인되지 않는다
+    - 실제 시드는 .invalid 라 EmailStr 에서 먼저 막히므로, 필터가 도는지 따로 확인
+    """
+    client.post("/auth/signup", json=credentials)
+
+    with create_engine(settings.DIRECT_URL).begin() as conn:
+        conn.execute(
+            text("update users set is_seed = true where email = :e"),
+            {"e": credentials["email"]},
+        )
+
+    r = client.post(
+        "/auth/login",
+        json={"email": credentials["email"], "password": credentials["password"]},
+    )
+    assert r.status_code == 401

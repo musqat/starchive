@@ -34,7 +34,7 @@ class ContentSummary(BaseModel):
 
     # 로그인했을 때만 채워진다
     my_status: ContentStatus | None = None
-    my_rating: int | None = None
+    my_rating: float | None = None
     my_liked: bool = False
     my_recommended: bool = False
 
@@ -75,7 +75,7 @@ class PublicMemo(BaseModel):
 
     nickname: str
     memo: str
-    rating: int | None
+    rating: float | None
     updated_at: datetime
 
 

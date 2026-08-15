@@ -5,6 +5,7 @@ const BASE_URL = "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./e2e",
+  globalTeardown: "./e2e/global-teardown.ts",
   fullyParallel: false, // 같은 DB 를 쓰므로 순차 실행
   workers: 1,
   forbidOnly: !!process.env.CI,

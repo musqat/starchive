@@ -1,4 +1,5 @@
 import MemoText from "@/components/MemoText";
+import Stars from "@/components/Stars";
 import { getPublicMemos } from "@/lib/api";
 
 /** 남들이 공개로 켠 메모. 없으면 아무것도 그리지 않는다 */
@@ -17,7 +18,7 @@ export default async function PublicMemos({ contentId }: { contentId: string }) 
           <li key={`${memo.nickname}-${memo.updated_at}`}>
             <p className="text-[12px] text-muted">
               {memo.nickname}
-              {memo.rating && <span className="ml-1.5 text-amber-400">{"★".repeat(memo.rating)}</span>}
+              {memo.rating && <Stars value={memo.rating} size={13} />}
             </p>
             <MemoText text={memo.memo} />
           </li>
