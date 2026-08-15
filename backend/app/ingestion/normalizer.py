@@ -115,6 +115,7 @@ def normalize_movie(data: dict) -> dict:
         },
     }
 
+
 def normalize_book(data: dict) -> dict:
     """알라딘 ItemList/ItemLookUp 응답의 item 하나를 Content 컬럼명 dict 로 변환"""
     isbn13 = data["isbn13"]

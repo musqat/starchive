@@ -34,7 +34,7 @@ def set_auth_cookie(response: Response, user_id: int) -> None:
 def sign_up(payload: SignUpIn, db: Session = Depends(get_db)):
     """이메일 중복이면 409"""
     existing_user = db.scalar(select(User).where(User.email == payload.email))
-    
+
     if existing_user:
         raise HTTPException(status_code=409, detail="Email already registered")
     user = User(
@@ -52,16 +52,19 @@ def sign_up(payload: SignUpIn, db: Session = Depends(get_db)):
 @router.post("/login", response_model=UserOut)
 def log_in(payload: LoginIn, response: Response, db: Session = Depends(get_db)):
     """성공 시 httpOnly 쿠키에 토큰. 실패는 이메일·비밀번호 구분 없이 401"""
-    user = db.scalar(select(User).where(User.email == payload.email))
+    # 시드 유저는 조회 단계에서 막는다
+    user = db.scalar(select(User).where(User.email == payload.email, User.is_seed.is_(False)))
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="invalid credentials")
-    
+
     set_auth_cookie(response, user.id)
     return user
+
 
 @router.post("/logout", status_code=204)
 def log_out(response: Response):
     response.delete_cookie(COOKIE_NAME)
+
 
 @router.get("/me", response_model=UserOut)
 def read_me(user: User = Depends(get_current_user)):

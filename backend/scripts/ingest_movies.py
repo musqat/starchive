@@ -14,6 +14,7 @@ async def fetch_one(client, sem, tmdb_id):
     async with sem:
         return await fetch_movie(client, tmdb_id)
 
+
 async def main():
     ids = load_target_tmdb_ids(Path("data/ml-latest-small"))
 
@@ -27,7 +28,7 @@ async def main():
 
     with Session() as session:
         for raw in raws:
-            if raw is None:          # 404
+            if raw is None:  # 404
                 continue
             upsert(session, normalize_movie(raw))
         session.commit()

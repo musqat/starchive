@@ -263,3 +263,15 @@ test("내용 없이 공개만 켜서 저장할 수 없다", async ({ page }) => 
   await saving(page, save.click());
   await expect(save).toBeDisabled();
 });
+
+test("상세에서 0.5 단위로 평점을 매긴다", async ({ page }) => {
+  await signUp(page);
+  await page.goto(DETAIL);
+
+  await saving(page, star(page, 3.5).click());
+  await expect(star(page, 3.5)).toHaveAttribute("aria-pressed", "true");
+
+  await page.reload();
+  await expect(star(page, 3.5)).toHaveAttribute("aria-pressed", "true");
+  await expect(star(page, 4)).toHaveAttribute("aria-pressed", "false");
+});

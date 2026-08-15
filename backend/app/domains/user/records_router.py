@@ -33,9 +33,7 @@ def list_library(
     if recommended is not None:
         stmt = stmt.where(UserContent.recommended == recommended)
     if has_memo is not None:
-        stmt = stmt.where(
-            UserContent.memo.isnot(None) if has_memo else UserContent.memo.is_(None)
-        )
+        stmt = stmt.where(UserContent.memo.isnot(None) if has_memo else UserContent.memo.is_(None))
     stmt = stmt.order_by(UserContent.updated_at.desc()).offset((page - 1) * size).limit(size)
 
     records = db.scalars(stmt).unique().all()
@@ -46,6 +44,7 @@ def list_library(
         record.content.my_liked = record.liked
         record.content.my_recommended = record.recommended
     return records
+
 
 @router.put("/records/{content_id}", response_model=RecordOut)
 def upsert_record(
@@ -58,7 +57,7 @@ def upsert_record(
 
     if not db.get(Content, content_id):
         raise HTTPException(status_code=404, detail="Content not found")
-    
+
     record = db.get(UserContent, (user.id, content_id))
 
     if not record:

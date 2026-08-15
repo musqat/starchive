@@ -58,9 +58,15 @@ def test_providers_prefers_flatrate():
             "results": {
                 "KR": {
                     "link": "https://example.com/watch",
-                    "rent": [{"provider_id": 3, "provider_name": "Google Play", "logo_path": "/g.jpg"}],
-                    "flatrate": [{"provider_id": 1, "provider_name": "wavve", "logo_path": "/w.jpg"}],
-                    "buy": [{"provider_id": 3, "provider_name": "Google Play", "logo_path": "/g.jpg"}],
+                    "rent": [
+                        {"provider_id": 3, "provider_name": "Google Play", "logo_path": "/g.jpg"}
+                    ],
+                    "flatrate": [
+                        {"provider_id": 1, "provider_name": "wavve", "logo_path": "/w.jpg"}
+                    ],
+                    "buy": [
+                        {"provider_id": 3, "provider_name": "Google Play", "logo_path": "/g.jpg"}
+                    ],
                 }
             }
         }

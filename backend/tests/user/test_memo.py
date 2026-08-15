@@ -47,7 +47,9 @@ def test_private_memo_hidden(auth_client, client):
 
 @pytest.mark.db  # 공개 메모는 닉네임과 함께 나오고, 내 것은 빠진다
 def test_public_memo_visible_to_others(auth_client, credentials):
-    auth_client.put(f"/me/records/{MOVIE}", json={"memo": "공개함", "memo_public": True, "rating": 4})
+    auth_client.put(
+        f"/me/records/{MOVIE}", json={"memo": "공개함", "memo_public": True, "rating": 4}
+    )
 
     mine = auth_client.get(f"/contents/{MOVIE}/memos").json()
     assert "공개함" not in [m["memo"] for m in mine]  # 내 메모는 상세 응답에 있다

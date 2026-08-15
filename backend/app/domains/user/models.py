@@ -8,7 +8,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.base import Base
 from app.domains.content.models import Content
 
-
 MEMO_MAX_LENGTH = 500
 
 
@@ -27,6 +26,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True)
     password_hash: Mapped[str] = mapped_column(String(100))  # bcrypt 는 60자
     nickname: Mapped[str] = mapped_column(String(30))
+    # MovieLens 평점을 담는 가짜 계정
+    is_seed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 
@@ -43,7 +44,8 @@ class UserContent(Base):
     )
 
     status: Mapped[ContentStatus] = mapped_column(SAEnum(ContentStatus, name="content_status"))
-    rating: Mapped[int | None]  # 내 평점 1~5
+    # 0.5 단위
+    rating: Mapped[float | None]
     liked: Mapped[bool] = mapped_column(Boolean, default=False)  # 내 기호
     recommended: Mapped[bool] = mapped_column(Boolean, default=False)  # 남에게 권할 만함
     memo: Mapped[str | None] = mapped_column(String(MEMO_MAX_LENGTH))

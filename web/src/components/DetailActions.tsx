@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 
+import Stars from "@/components/Stars";
 import { deleteRecord, putRecord } from "@/lib/client";
 import { statusLabel } from "@/lib/labels";
 import type { ContentDetail, ContentStatus } from "@/lib/types";
@@ -14,7 +15,6 @@ type State = {
   recommended: boolean;
 };
 
-const STARS = [1, 2, 3, 4, 5];
 
 /** 상세용. 별점과 상태를 함께 다룬다 */
 export default function DetailActions({ item }: { item: ContentDetail }) {
@@ -71,21 +71,8 @@ export default function DetailActions({ item }: { item: ContentDetail }) {
   return (
     <div className="mt-4 border-t border-line pt-3">
       <p className="mb-1 text-[11px] text-muted">내 평점</p>
-      <div className="mb-3 flex gap-0.5">
-        {STARS.map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => rate(n)}
-            aria-label={`${n}점`}
-            aria-pressed={state.rating === n}
-            className={`text-xl leading-none transition hover:scale-110 ${
-              state.rating && n <= state.rating ? "text-amber-400" : "text-white/20"
-            }`}
-          >
-            ★
-          </button>
-        ))}
+      <div className="mb-3">
+        <Stars value={state.rating} onChange={rate} size={22} />
       </div>
 
       <div className="grid gap-1.5">
