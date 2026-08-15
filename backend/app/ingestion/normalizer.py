@@ -96,6 +96,31 @@ def is_excluded_book(raw_category: str | None) -> bool:
     return bool(categories) and categories[0] in EXCLUDED_CATEGORIES
 
 
+def build_embedding_text(
+    title: str,
+    genre: list[str] | None,
+    creator: str | None,
+    description: str | None,
+) -> str | None:
+    """임베딩에 넣을 텍스트
+
+    줄거리만 쓰면 알라딘 책소개처럼 홍보 문구가 섞였을 때 내용이 묻힌다.
+    제목·장르를 함께 넣어 작품 쪽으로 끌어당긴다.
+
+    줄거리가 없으면 만들지 않는다 — 제목만으로는 어느 작품과도 어중간하게 가까워진다
+    """
+    if not description:
+        return None
+
+    lines = [title]
+    if genre:
+        lines.append(", ".join(genre))
+    if creator:
+        lines.append(creator)
+    lines.append(description)
+    return "\n".join(lines)
+
+
 def normalize_movie(data: dict) -> dict:
     """TMDB /movie/{id} 응답을 Content 컬럼명 dict 로 변환"""
     poster = data.get("poster_path")
