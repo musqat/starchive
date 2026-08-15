@@ -78,6 +78,9 @@ def _author(raw: str | None) -> str | None:
 
 CATEGORY_DEPTH = 2
 
+# 제외 목록 (책)
+EXCLUDED_CATEGORIES = frozenset({"수험서/자격증", "외국어", "컴퓨터/모바일"})
+
 
 def _categories(raw: str | None) -> list[str]:
     """'국내도서>소설/시/희곡>영미소설>영미소설 일반' → ['소설/시/희곡', '영미소설']."""
@@ -85,6 +88,12 @@ def _categories(raw: str | None) -> list[str]:
         return []
     parts = [c.strip() for c in raw.split(">")[1:] if c.strip()]
     return parts[:CATEGORY_DEPTH]
+
+
+def is_excluded_book(raw_category: str | None) -> bool:
+    """최상위 분류 기준으로 필터링"""
+    categories = _categories(raw_category)
+    return bool(categories) and categories[0] in EXCLUDED_CATEGORIES
 
 
 def normalize_movie(data: dict) -> dict:

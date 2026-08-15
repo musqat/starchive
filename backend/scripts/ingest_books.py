@@ -5,7 +5,7 @@ import httpx
 from app.core.clients.aladin import fetch_bestsellers
 from app.core.config import settings
 from app.ingestion.db import Session, upsert
-from app.ingestion.normalizer import normalize_book
+from app.ingestion.normalizer import is_excluded_book, normalize_book
 
 PAGE_SIZE = 50
 TOTAL = 20
@@ -25,13 +25,20 @@ async def main():
             return_exceptions=True,
         )
 
+    saved = skipped = 0
     with Session() as session:
         for page in pages:
             if not isinstance(page, list):  # 예외는 건너뛴다
                 continue
             for item in page:
+                if is_excluded_book(item.get("categoryName")):
+                    skipped += 1
+                    continue
                 upsert(session, normalize_book(item))
+                saved += 1
         session.commit()
+
+    print(f"저장 {saved:,}건 / 제외 {skipped:,}건")
 
 
 asyncio.run(main())
