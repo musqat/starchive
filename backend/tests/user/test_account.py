@@ -79,7 +79,7 @@ def test_requires_login(client):
 
 @pytest.mark.db  # 시드 계정은 로그인할 수 없다
 def test_seed_cannot_log_in(client):
-    """ 세단계 블로킹
+    """세단계 블로킹
     1. EmailStr 이 .invalid(예약 TLD) 를 주소 형식 단계에서 거부 → 422
     2. 조회에 is_seed = false 필터
     3. 비밀번호 해시로 임의 값

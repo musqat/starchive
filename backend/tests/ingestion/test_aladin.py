@@ -2,7 +2,7 @@ import httpx
 import pytest
 
 from app.core.clients.aladin import fetch_bestsellers
-from app.ingestion.normalizer import normalize_book
+from app.ingestion.normalizer import is_excluded_book, normalize_book
 
 
 @pytest.mark.external
@@ -32,3 +32,14 @@ async def test_bestseller_start_is_page_number():
         page2 = await fetch_bestsellers(client, start=2, max_results=50)
 
     assert not {i["isbn13"] for i in page1} & {i["isbn13"] for i in page2}
+
+
+def test_excluded_categories():
+    """제외 목록에 있는 책들을 필터링"""
+    assert is_excluded_book("국내도서>외국어>토익>Reading")
+    assert is_excluded_book("국내도서>수험서/자격증>공무원 수험서>국어")
+    assert is_excluded_book("국내도서>컴퓨터/모바일>활용능력>컴퓨터활용능력")
+
+    assert not is_excluded_book("국내도서>소설/시/희곡>영미소설")
+    assert not is_excluded_book("국내도서>어린이>동화/명작/고전")
+    assert not is_excluded_book(None)  # 분류가 없으면 판단하지 않는다
