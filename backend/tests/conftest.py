@@ -34,6 +34,16 @@ def credentials():
 
 
 @pytest.fixture
+def db_session():
+    """도메인 함수 호출"""
+    from app.ingestion.db import Session
+
+    with Session() as session:
+        yield session
+        session.rollback()
+
+
+@pytest.fixture
 def auth_client(client: TestClient, credentials: dict) -> TestClient:
     """가입 + 로그인까지 된 클라이언트"""
     client.post("/auth/signup", json=credentials)

@@ -62,4 +62,6 @@ class UserContent(Base):
         Index("ix_user_contents_liked", "user_id", "liked"),  # 개인화 추천 입력
         Index("ix_user_contents_recommended", "user_id", "recommended"),  # 커뮤니티 신호
         Index("ix_user_contents_public_memo", "content_id", "memo_public"),  # 상세의 공개 메모
+        # 취향 유사도 3홉 중 가운데. 어떤 작품을 좋아한 사람들을 content_id 로 찾는다
+        Index("ix_user_contents_content_rating", "content_id", "rating"),
     )
