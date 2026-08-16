@@ -1,14 +1,26 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
 
+from app.core.security import MAX_PASSWORD_BYTES
 from app.domains.content.schemas import ContentSummary
 from app.domains.user.models import MEMO_MAX_LENGTH, ContentStatus
 
 
+def _fits_bcrypt(value: str) -> str:
+    """글자 수가 아니라 바이트로 체크"""
+    if len(value.encode()) > MAX_PASSWORD_BYTES:
+        raise ValueError(f"비밀번호가 {MAX_PASSWORD_BYTES}바이트를 넘음")
+    return value
+
+
+Password = Annotated[str, Field(min_length=8), AfterValidator(_fits_bcrypt)]
+
+
 class SignUpIn(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8, max_length=72)
+    password: Password
     nickname: str = Field(min_length=1, max_length=30)
 
 
@@ -19,7 +31,7 @@ class LoginIn(BaseModel):
 
 class PasswordChangeIn(BaseModel):
     current_password: str
-    new_password: str = Field(min_length=8, max_length=72)
+    new_password: Password
 
 
 class WithdrawIn(BaseModel):

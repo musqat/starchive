@@ -11,13 +11,18 @@ import jwt
 
 from app.core.config import settings
 
+MAX_PASSWORD_BYTES = 72  # bcrypt 최대
+
 
 def hash_password(raw: str) -> str:
     return bcrypt.hashpw(raw.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(raw: str, hashed: str) -> bool:
-    return bcrypt.checkpw(raw.encode(), hashed.encode())
+    try:
+        return bcrypt.checkpw(raw.encode(), hashed.encode())
+    except ValueError:  # 한계를 넘은 입력
+        return False
 
 
 def create_access_token(user_id: int) -> str:

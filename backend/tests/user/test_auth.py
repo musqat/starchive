@@ -20,6 +20,26 @@ def test_signup_duplicate_email(client, credentials):
     assert r.json() == {"detail": "Email already registered"}
 
 
+@pytest.mark.db  # 바이트 테스트 73+ → 422
+@pytest.mark.parametrize("password", ["a" * 73, "é" * 40])  # é 는 2바이트라 40자 = 80바이트
+def test_signup_password_over_bcrypt_limit(client, credentials, password):
+    r = client.post("/auth/signup", json={**credentials, "password": password})
+    assert r.status_code == 422
+
+
+@pytest.mark.db  # 바이트 테스트 72 → 통과
+def test_signup_password_at_bcrypt_limit(client, credentials):
+    r = client.post("/auth/signup", json={**credentials, "password": "a" * 72})
+    assert r.status_code == 201
+
+
+@pytest.mark.db  # 로그인은 길이 제한이 없다. 틀린 비밀번호로 처리돼 401
+def test_login_password_over_bcrypt_limit(client, credentials):
+    client.post("/auth/signup", json=credentials)
+    r = client.post("/auth/login", json={"email": credentials["email"], "password": "a" * 100})
+    assert r.status_code == 401
+
+
 @pytest.mark.db  # 로그인 → 200, 쿠키 설정
 def test_login(client, credentials):
     client.post("/auth/signup", json=credentials)
