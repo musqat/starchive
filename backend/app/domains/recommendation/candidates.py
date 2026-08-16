@@ -15,8 +15,10 @@ from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import profile
 from app.domains.user.models import UserContent
 
-CONTENT_WEIGHT = 0.7
-TASTE_WEIGHT = 0.3
+# 측정 결과 -> 0.7:0.3 은 Recall@10 0.021 로 인기순(0.097)에 졌다
+# 두 점수의 범위 차이 때문 —> 내용 기반은 바닥이 0.35, 이웃은 바닥이 0 -> 점수에서 차이가 나고 시작함
+CONTENT_WEIGHT = 0.3
+TASTE_WEIGHT = 0.7
 
 MIN_SIMILARITY = 0.35  # 최소 유사도 - 이 유사도 이상만 체크
 MIN_PEER_OVERLAP = 2  # 최소 작품 겹친 이웃수 - 1의 경우 하나만 겹쳐도 추천되서 2 이상으로
