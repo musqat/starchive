@@ -236,6 +236,14 @@ uv run pytest -q                                  # 전체
 | `db` | Neon 연결 |
 | `external` | TMDB · 알라딘 API |
 
+**배포 의존성** — Vercel 은 `[project].dependencies` 만 설치한다. `app/` 이 `dev`·`etl` 그룹의
+패키지를 쓰면 로컬 테스트는 통과하고 배포만 죽는다.
+
+```bash
+cd backend
+uv run --no-dev --no-group etl python -c "from app.main import app"
+```
+
 **프론트** — 타입·린트.
 
 ```bash

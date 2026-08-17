@@ -14,11 +14,13 @@ dependencies = [
     "openai",
     "pydantic-settings",
     "pydantic[email]>=2.13.4",
+    # app/core/clients/* 가 재시도에 쓴다. 런타임 의존이라 etl 그룹에 두면 배포가 죽는다
+    "tenacity",
 ]
 
 [dependency-groups]
 dev = ["pytest", "pytest-asyncio", "ruff", "alembic"]
-etl = ["pandas", "tenacity"]
+etl = ["pandas"]
 
 [tool.ruff]
 line-length = 100
