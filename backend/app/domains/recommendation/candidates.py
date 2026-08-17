@@ -12,11 +12,12 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.domains.content.models import Content, ContentType
-from app.domains.recommendation import profile
+from app.domains.recommendation import dedupe, profile
 from app.domains.user.models import UserContent
 
 # 측정 결과 -> 0.7:0.3 은 Recall@10 0.021 로 인기순(0.097)에 졌다
-# 두 점수의 범위 차이 때문 —> 내용 기반은 바닥이 0.35, 이웃은 바닥이 0 -> 점수에서 차이가 나고 시작함
+# 두 점수의 범위 차이 때문 —> 내용 기반은 바닥이 0.35, 이웃은 바닥이 0
+# -> 점수에서 차이가 나고 시작함
 CONTENT_WEIGHT = 0.3
 TASTE_WEIGHT = 0.7
 
@@ -155,4 +156,15 @@ def generate(
         for row in rows
     ]
     candidates.sort(key=lambda c: c.score, reverse=True)
-    return candidates[:limit]
+    # 판본만 다른 것을 빼려면 점수순으로 정렬
+    return dedupe.drop_duplicates(candidates, _recorded_titles(db, user_id))[:limit]
+
+
+def _recorded_titles(db: Session, user_id: int) -> set[str]:
+    """내가 기록한 작품의 정규화 제목 -> 판본 중복 제거용"""
+    stmt = (
+        select(Content.title)
+        .join(UserContent, UserContent.content_id == Content.id)
+        .where(UserContent.user_id == user_id)
+    )
+    return {dedupe.normalize(title) for title in db.scalars(stmt)}
