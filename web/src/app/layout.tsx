@@ -24,16 +24,21 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <header className="border-b border-line">
-          <nav className="mx-auto grid max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-6 px-4 py-3">
-            <div className="flex items-baseline gap-5">
+          <nav className="mx-auto grid max-w-6xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:gap-6">
+            {/* 좁은 화면에서 링크가 글자 단위로 쪼개지지 않게 nowrap */}
+            <div className="flex items-baseline gap-3 whitespace-nowrap sm:gap-5">
               <Link href="/" className="text-[17px] font-medium">
                 starchive
               </Link>
-              <Link href="/movies" className="text-sm text-muted">
+              {/* 홈의 전체 보기로도 닿아서 좁은 화면에서는 접는다 */}
+              <Link href="/movies" className="hidden text-sm text-muted sm:block">
                 영화
               </Link>
-              <Link href="/books" className="text-sm text-muted">
+              <Link href="/books" className="hidden text-sm text-muted sm:block">
                 책
+              </Link>
+              <Link href="/recommendations" className="text-sm text-muted">
+                추천
               </Link>
             </div>
 

@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     CRON_SECRET: str | None = None
     REC_COOLDOWN_MINUTES: int = 60
     LLM_TIMEOUT_SECONDS: int = 30
+    # 사용자당 LLM 2회. Vercel Hobby 함수 최대 60초라 한 번에 이만큼만
+    CRON_USER_LIMIT: int = 5
+    CRON_STALE_HOURS: int = 20  # 하루 1회 실행이라 20시간 지난 것만
     ### 수집
     MAX_CONCURRENCY: int = 4
     REQUEST_DELAY_SEC: float = 0.3
