@@ -4,9 +4,10 @@
 """
 
 import uuid
+from datetime import datetime
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domains.content.models import Content, ContentType
@@ -16,6 +17,49 @@ from app.domains.recommendation.prompts import LIKED_LIMIT, PromptItem
 from app.domains.user.models import User, UserContent
 
 TYPES = (ContentType.MOVIE, ContentType.BOOK)
+
+# 콜드 스타트 곡선. 2편은 인기순의 0.72배, 3편은 동점, 5편부터 앞선다
+MIN_RATED = 5
+
+
+def rated_count(db: Session, user_id: int, type_: ContentType | None = None) -> int:
+    """높게 평가한 개수"""
+    stmt = (
+        select(func.count())
+        .select_from(UserContent)
+        .join(Content, Content.id == UserContent.content_id)
+        .where(UserContent.user_id == user_id, UserContent.rating >= profile.LIKED_RATING)
+    )
+    if type_:
+        stmt = stmt.where(Content.type == type_)
+    return db.scalar(stmt) or 0
+
+
+def generated_at(db: Session, user_id: int) -> datetime | None:
+    """현재 배치를 만든 시각"""
+    return db.scalar(
+        select(Recommendation.generated_at)
+        .join(User, User.current_rec_batch_id == Recommendation.batch_id)
+        .where(User.id == user_id)
+        .limit(1)
+    )
+
+
+def stale_users(db: Session, older_than: datetime, limit: int) -> list[int]:
+    """갱신할 사용자. 오래된 것부터, 상한까지만
+
+    배치가 없는 사람은 넣지 않는다 — 첫 생성은 사용자가 직접 누른다
+    """
+    stmt = (
+        select(User.id, func.min(Recommendation.generated_at).label("made"))
+        .join(Recommendation, Recommendation.batch_id == User.current_rec_batch_id)
+        .where(User.is_seed.is_(False))
+        .group_by(User.id)
+        .having(func.min(Recommendation.generated_at) < older_than)
+        .order_by("made")
+        .limit(limit)
+    )
+    return [row.id for row in db.execute(stmt)]
 
 
 def liked_titles(db: Session, user_id: int, limit: int = LIKED_LIMIT) -> list[str]:

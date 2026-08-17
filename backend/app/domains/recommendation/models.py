@@ -5,10 +5,10 @@ from datetime import datetime
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import ForeignKey, Index, SmallInteger, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.base import Base
-from app.domains.content.models import ContentType
+from app.domains.content.models import Content, ContentType
 
 REASON_MAX_LENGTH = 300
 
@@ -39,6 +39,8 @@ class Recommendation(Base):
     reason: Mapped[str | None] = mapped_column(String(REASON_MAX_LENGTH))
     reason_source: Mapped[ReasonSource] = mapped_column(SAEnum(ReasonSource, name="reason_source"))
     generated_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+    content: Mapped[Content] = relationship(lazy="joined")
 
     # 화면이 읽는 경로 — 배치와 매체를 지정해 순위대로
     __table_args__ = (Index("ix_recommendations_batch_type_rank", "batch_id", "type", "rank"),)
