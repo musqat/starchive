@@ -67,3 +67,25 @@ export type ContentRecord = {
 export type LibraryItem = ContentRecord & {
   content: ContentSummary;
 };
+
+export type ReasonSource = "LLM" | "TEMPLATE";
+
+export type RecommendationItem = {
+  rank: number;
+  reason: string | null;
+  /** TEMPLATE 은 고정 문장이라 화면에 쓰지 않는다 */
+  reason_source: ReasonSource;
+  content: ContentSummary;
+};
+
+export type RecommendationList = {
+  items: RecommendationItem[];
+  generated_at: string | null;
+  rated_count: number;
+  required_count: number;
+};
+
+export type RefreshResult = {
+  movie: RecommendationList;
+  book: RecommendationList;
+};

@@ -7,6 +7,7 @@ import type {
   ContentType,
   LibraryItem,
   PublicMemo,
+  RecommendationList,
   SortKey,
   SortOrder,
   User,
@@ -68,6 +69,11 @@ export function getGenres(type: ContentType): Promise<string[]> {
 /** 비로그인이면 null */
 export function getMe(): Promise<User | null> {
   return get<User>("/auth/me").catch(() => null);
+}
+
+/** 만들어둔 것만 읽는다. 비어 있으면 rated_count 로 안내 */
+export function getRecommendations(type: ContentType): Promise<RecommendationList> {
+  return get<RecommendationList>(`/recommendations?type=${type}`);
 }
 
 export function getLibrary(

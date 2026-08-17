@@ -1,6 +1,6 @@
 "use client";
 
-import type { ContentRecord, ContentStatus, User } from "@/lib/types";
+import type { ContentRecord, ContentStatus, RefreshResult, User } from "@/lib/types";
 
 /** next.config 의 rewrite 로 백엔드에 닿는다. 같은 출처라 쿠키가 이 도메인에 저장된다 */
 const BASE = "/api";
@@ -59,4 +59,9 @@ export function putRecord(
 
 export function deleteRecord(contentId: string) {
   return request<void>(`/me/records/${encodeURIComponent(contentId)}`, { method: "DELETE" });
+}
+
+/** LLM 을 부르므로 몇 초 걸린다. 쿨다운 중이면 429, 기록이 부족하면 409 */
+export function refreshRecommendations() {
+  return request<RefreshResult>("/me/recommendations/refresh", { method: "POST" });
 }
