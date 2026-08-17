@@ -30,6 +30,11 @@ class User(Base):
     nickname: Mapped[str] = mapped_column(String(30))
     # MovieLens 평점을 담는 가짜 계정
     is_seed: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 올리면 이전에 발급한 토큰이 전부 무효가 된다. JWT 는 서버가 취소할 수 없다
+    token_version: Mapped[int] = mapped_column(default=0)
+    # 서버리스는 요청마다 인스턴스가 달라 메모리 카운터를 쓸 수 없다
+    failed_logins: Mapped[int] = mapped_column(default=0)
+    locked_until: Mapped[datetime | None]
     # 지금 보여줄 추천 묶음. 배치가 다 들어간 뒤 마지막에 갱신한다
     current_rec_batch_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

@@ -64,6 +64,67 @@ def test_login_unknown_email(client):
     assert r.status_code == 401
 
 
+@pytest.mark.db  # 실패가 쌓이면 잠기고, 잠긴 뒤에는 맞는 비밀번호도 막힌다
+def test_login_lockout(client, credentials):
+    from app.core.config import settings
+
+    client.post("/auth/signup", json=credentials)
+    wrong = {"email": credentials["email"], "password": "wrongwrong"}
+
+    for _ in range(settings.MAX_FAILED_LOGINS):
+        assert client.post("/auth/login", json=wrong).status_code == 401
+
+    r = client.post("/auth/login", json=wrong)
+    assert r.status_code == 429
+    assert int(r.headers["Retry-After"]) > 0
+
+    # 잠금은 비밀번호가 맞아도 풀리지 않는다
+    correct = {"email": credentials["email"], "password": credentials["password"]}
+    assert client.post("/auth/login", json=correct).status_code == 429
+
+
+@pytest.mark.db  # 로그인에 성공하면 실패 기록이 지워진다
+def test_successful_login_clears_failures(client, credentials, db_session):
+    from sqlalchemy import select
+
+    from app.domains.user.models import User
+
+    client.post("/auth/signup", json=credentials)
+    client.post("/auth/login", json={"email": credentials["email"], "password": "wrongwrong"})
+    client.post(
+        "/auth/login",
+        json={"email": credentials["email"], "password": credentials["password"]},
+    )
+
+    user = db_session.scalar(select(User).where(User.email == credentials["email"]))
+    assert user.failed_logins == 0
+    assert user.locked_until is None
+
+
+@pytest.mark.db  # 비밀번호를 바꾸면 다른 기기의 토큰이 끊긴다
+def test_password_change_invalidates_other_sessions(client, credentials):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    client.post("/auth/signup", json=credentials)
+    login = {"email": credentials["email"], "password": credentials["password"]}
+    client.post("/auth/login", json=login)
+
+    # 다른 기기. 같은 계정으로 따로 로그인해 토큰을 하나 더 받는다
+    other = TestClient(app)
+    other.post("/auth/login", json=login)
+    assert other.get("/auth/me").status_code == 200
+
+    client.patch(
+        "/auth/password",
+        json={"current_password": credentials["password"], "new_password": "newsecret1234"},
+    )
+
+    assert other.get("/auth/me").status_code == 401  # 옛 토큰
+    assert client.get("/auth/me").status_code == 200  # 바꾼 기기는 유지
+
+
 @pytest.mark.db  # 비로그인 → 401
 def test_me_requires_login(client):
     r = client.get("/auth/me")

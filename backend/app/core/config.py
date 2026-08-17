@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     COOKIE_SECURE: bool = False
     ACCESS_TOKEN_EXPIRE_DAYS: int = 7
+    MAX_FAILED_LOGINS: int = 5
+    LOGIN_LOCK_MINUTES: int = 15
     ### Front
     FRONTEND_ORIGIN: str = "http://localhost:3000"
     ### 외부 API
