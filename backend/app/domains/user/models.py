@@ -1,8 +1,10 @@
 import enum
+import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, ForeignKey, Index, String, func
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.base import Base
@@ -28,6 +30,8 @@ class User(Base):
     nickname: Mapped[str] = mapped_column(String(30))
     # MovieLens 평점을 담는 가짜 계정
     is_seed: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 지금 보여줄 추천 묶음. 배치가 다 들어간 뒤 마지막에 갱신한다
+    current_rec_batch_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 
