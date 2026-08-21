@@ -17,7 +17,7 @@ def test_counts_by_type(conn):
     counts = dict(conn.execute(text("select type, count(*) from contents group by type")).all())
 
     assert counts.get("MOVIE", 0) > 2900
-    assert counts.get("BOOK", 0) > 900
+    assert counts.get("BOOK", 0) > 800  # 만화 194권을 뺐다
 
 
 @pytest.mark.db

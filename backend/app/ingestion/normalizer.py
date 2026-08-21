@@ -79,7 +79,15 @@ def _author(raw: str | None) -> str | None:
 CATEGORY_DEPTH = 2
 
 # 제외 목록 (책)
-EXCLUDED_CATEGORIES = frozenset({"수험서/자격증", "외국어", "컴퓨터/모바일"})
+EXCLUDED_CATEGORIES = frozenset(
+    {
+        "수험서/자격증",
+        "외국어",
+        "컴퓨터/모바일",
+        # 베스트셀러에는 연재 후속권만 올라온다. 89% 가 권수 표기가 있고
+        "만화/라이트노벨",
+    }
+)
 
 
 def _categories(raw: str | None) -> list[str]:
