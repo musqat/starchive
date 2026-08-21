@@ -11,6 +11,7 @@ evaluate.py 와 같은 방식으로 가리고, 후보 30 을 두 가지로 줄 �
 import asyncio
 import random
 import sys
+from pathlib import Path
 
 import httpx
 from sqlalchemy import delete, select
@@ -20,9 +21,13 @@ from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import candidates, pipeline, profile, reranker
 from app.domains.user.models import UserContent
 from app.ingestion.db import Session
+from app.ingestion.movielens import load_eval_content_ids
 from scripts.evaluate import SEED, K, ndcg, pick_users, recall, split
 
 USERS = 50
+
+# 카탈로그가 늘어도 숫자가 흔들리지 않게 후보를 MovieLens 영화로 묶는다
+EVAL_IDS = load_eval_content_ids(Path("data/ml-latest-small"))
 
 
 async def compare(
@@ -52,7 +57,7 @@ async def compare(
         )
         db.flush()
 
-        found = candidates.generate(db, user_id, ContentType.MOVIE)
+        found = candidates.generate(db, user_id, ContentType.MOVIE, only_ids=EVAL_IDS)
         if not found:
             return None
         titles = pipeline.liked_titles(db, user_id)

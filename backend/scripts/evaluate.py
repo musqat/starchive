@@ -10,6 +10,7 @@
 import random
 import sys
 from math import log2
+from pathlib import Path
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session as SessionType
@@ -18,12 +19,16 @@ from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import candidates, profile
 from app.domains.user.models import User, UserContent
 from app.ingestion.db import Session
+from app.ingestion.movielens import load_eval_content_ids
 
 MIN_RATED = 20  # 20% 를 가려 정답 4건 -> 지표 분산을 위해서
 HOLDOUT = 0.2
 K = 10  # 화면에 띄울 개수와 맞춤
 SEED = 42  # 튜닝 전후 비교용 고정값
 USERS = 200
+
+# 카탈로그가 늘어도 숫자가 흔들리지 않게 후보를 MovieLens 영화로 묶는다
+EVAL_IDS = load_eval_content_ids(Path("data/ml-latest-small"))
 
 
 def pick_users(db: SessionType, limit: int) -> list[int]:
@@ -112,7 +117,7 @@ def evaluate_one(db: SessionType, user_id: int, rng: random.Random) -> tuple[flo
         )
         db.flush()  # 이어지는 조회에 반영
 
-        got = candidates.generate(db, user_id, ContentType.MOVIE, limit=K)
+        got = candidates.generate(db, user_id, ContentType.MOVIE, limit=K, only_ids=EVAL_IDS)
         ranked = [c.content_id for c in got]
         popular = by_popularity(db, user_id)
     finally:
