@@ -68,12 +68,12 @@ export type LibraryItem = ContentRecord & {
   content: ContentSummary;
 };
 
-export type ReasonSource = "LLM" | "TEMPLATE";
+export type ReasonSource = "LLM" | "TEMPLATE" | "RECENT";
 
 export type RecommendationItem = {
   rank: number;
   reason: string | null;
-  /** TEMPLATE 은 고정 문장이라 화면에 쓰지 않는다 */
+  /** TEMPLATE 은 전 사용자에게 같은 문장이라 화면에 쓰지 않는다 */
   reason_source: ReasonSource;
   content: ContentSummary;
 };

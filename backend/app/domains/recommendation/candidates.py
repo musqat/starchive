@@ -7,8 +7,9 @@
 """
 
 from dataclasses import dataclass
+from datetime import date, timedelta
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Float, Select, cast, func, select
 from sqlalchemy.orm import Session
 
 from app.domains.content.models import Content, ContentType
@@ -25,6 +26,12 @@ MIN_SIMILARITY = 0.35  # 최소 유사도 - 이 유사도 이상만 체크
 MIN_PEER_OVERLAP = 2  # 최소 작품 겹친 이웃수 - 1의 경우 하나만 겹쳐도 추천되서 2 이상으로
 POOL = 100  # 뽑아 섞을 개수
 LIMIT = 30
+
+# 신작은 시드 평점이 없어 이웃 점수가 0이다. 점수 경쟁으로는 상위 10에 못 올라온다
+# 2칸이면 Recall 0.150 -> 0.130 (인기순 0.097 대비 +34%), 커버리지 82 -> 101편
+RECENT_SLOTS = 2
+RECENT_SINCE = date(2018, 1, 1)  # MovieLens 가 여기서 끝난다
+FRESH_DAYS = 730  # 편수로 밀려 최근작이 안 뽑히므로 최근 2년을 따로 본다
 
 
 @dataclass
@@ -89,18 +96,33 @@ def by_taste(
         .where(UserContent.user_id == user_id, UserContent.rating >= profile.LIKED_RATING)
         .subquery()
     )
-
-    # 겹치는 개수가 많은 사람의 의견을 무겁게
-    peers = (
-        select(UserContent.user_id, func.count().label("overlap"))
-        .join(mine, mine.c.content_id == UserContent.content_id)
-        .where(UserContent.rating >= profile.LIKED_RATING, UserContent.user_id != user_id)
+    mine_count = (
+        select(func.count())
+        .select_from(UserContent)
+        .where(UserContent.user_id == user_id, UserContent.rating >= profile.LIKED_RATING)
+        .scalar_subquery()
+    )
+    totals = (
+        select(UserContent.user_id, func.count().label("total"))
+        .where(UserContent.rating >= profile.LIKED_RATING)
         .group_by(UserContent.user_id)
-        .having(func.count() >= MIN_PEER_OVERLAP)
         .subquery()
     )
 
-    signal = func.sum(peers.c.overlap).label("signal")
+    # 자카드 — 겹침을 합집합으로 나눈다. 개수만 세면 많이 본 사람이 모두의 이웃이 된다
+    overlap = func.count()
+    weight = cast(overlap, Float) / (mine_count + totals.c.total - overlap)
+    peers = (
+        select(UserContent.user_id, weight.label("weight"))
+        .join(mine, mine.c.content_id == UserContent.content_id)
+        .join(totals, totals.c.user_id == UserContent.user_id)
+        .where(UserContent.rating >= profile.LIKED_RATING, UserContent.user_id != user_id)
+        .group_by(UserContent.user_id, totals.c.total)
+        .having(overlap >= MIN_PEER_OVERLAP)
+        .subquery()
+    )
+
+    signal = func.sum(peers.c.weight).label("signal")
     stmt = (
         select(UserContent.content_id, signal)
         .join(peers, peers.c.user_id == UserContent.user_id)
@@ -122,7 +144,6 @@ def by_taste(
         return {}
 
     # 절대값은 데이터 크기에 좌우돼 내용 점수와 못 섞음. 최댓값으로 나눔
-    # SUM() 은 Decimal 이라 float 으로 맞춤
     top = float(max(row.signal for row in rows))
     return {row.content_id: float(row.signal) / top for row in rows}
 
@@ -175,3 +196,57 @@ def _recorded_titles(db: Session, user_id: int) -> set[str]:
         .where(UserContent.user_id == user_id)
     )
     return {dedupe.normalize(title) for title in db.scalars(stmt)}
+
+
+def _recent_ids(db: Session, type_: ContentType | None, fresh: bool) -> set[str]:
+    stmt = select(Content.id).where(
+        Content.release_date >= RECENT_SINCE, Content.embedding.isnot(None)
+    )
+    cut = date.today() - timedelta(days=FRESH_DAYS)
+    stmt = stmt.where(Content.release_date >= cut if fresh else Content.release_date < cut)
+    if type_:
+        stmt = stmt.where(Content.type == type_)
+    return set(db.scalars(stmt))
+
+
+def recent_picks(
+    db: Session,
+    user_id: int,
+    type_: ContentType | None = None,
+    limit: int = RECENT_SLOTS,
+) -> list[Candidate]:
+    """신작 자리. 내용 점수로만 뽑는다 — 이웃 점수가 0이라 쓸 수 없다
+
+    최근 2년에서 절반을 먼저 채운다. 한 풀에서 뽑으면 편수가 많은 옛날 것이 이긴다
+    """
+    vector = profile.build(db, user_id, type_)
+    if not vector or limit <= 0:
+        return []
+
+    fresh_n = max(1, limit // 2)
+    picked: dict[str, float] = {}
+    for want, fresh in ((fresh_n, True), (limit - fresh_n, False)):
+        pool = _recent_ids(db, type_, fresh) - set(picked)
+        if not pool or want <= 0:
+            continue
+        picked |= by_content(db, vector, user_id, type_, limit=want, only_ids=pool)
+
+    if not picked:
+        return []
+
+    rows = db.execute(
+        select(Content.id, Content.title, Content.type).where(Content.id.in_(picked))
+    ).all()
+    found = [
+        Candidate(
+            content_id=row.id,
+            title=row.title,
+            type=row.type,
+            score=CONTENT_WEIGHT * picked[row.id],
+            content_score=picked[row.id],
+            taste_score=0.0,
+        )
+        for row in rows
+    ]
+    found.sort(key=lambda c: c.score, reverse=True)
+    return found[:limit]
