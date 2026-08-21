@@ -47,6 +47,7 @@ def by_content(
     user_id: int,
     type_: ContentType | None,
     limit: int = POOL,
+    only_ids: set[str] | None = None,
 ) -> dict[str, float]:
     """내용 점수 — 취향 중심과 줄거리가 가까운 작품
 
@@ -65,6 +66,8 @@ def by_content(
     )
     if type_:
         stmt = stmt.where(Content.type == type_)
+    if only_ids:
+        stmt = stmt.where(Content.id.in_(only_ids))
     return {row.id: float(row.similarity) for row in db.execute(stmt)}
 
 
@@ -73,6 +76,7 @@ def by_taste(
     user_id: int,
     type_: ContentType | None,
     limit: int = POOL,
+    only_ids: set[str] | None = None,
 ) -> dict[str, float]:
     """이웃 점수 — 나와 겹치는 사람들이 좋아한 작품
 
@@ -110,6 +114,8 @@ def by_taste(
     )
     if type_:
         stmt = stmt.join(Content, Content.id == UserContent.content_id).where(Content.type == type_)
+    if only_ids:
+        stmt = stmt.where(UserContent.content_id.in_(only_ids))
 
     rows = db.execute(stmt).all()
     if not rows:
@@ -126,12 +132,13 @@ def generate(
     user_id: int,
     type_: ContentType | None = None,
     limit: int = LIMIT,
+    only_ids: set[str] | None = None,
 ) -> list[Candidate]:
     """후보 목록. 기록이 없으면 빈 목록 — 호출한 쪽에서 인기순으로 폴백"""
     vector = profile.build(db, user_id, type_)
 
-    content = by_content(db, vector, user_id, type_) if vector else {}
-    taste = by_taste(db, user_id, type_)
+    content = by_content(db, vector, user_id, type_, only_ids=only_ids) if vector else {}
+    taste = by_taste(db, user_id, type_, only_ids=only_ids)
 
     scores: dict[str, tuple[float, float]] = {}
     for content_id in content.keys() | taste.keys():

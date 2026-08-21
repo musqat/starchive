@@ -43,3 +43,8 @@ def load_ratings(data_dir: Path, known_ids: set[str]) -> Iterator[SeedRating]:
             if content_id not in known_ids:
                 continue
             yield SeedRating(row["userId"], content_id, float(row["rating"]))
+
+
+def load_eval_content_ids(data_dir: Path, limit: int = 3000) -> set[str]:
+    """평가 대상 content_id. 카탈로그가 늘어도 평가 숫자가 흔들리지 않게 고정한다"""
+    return {make_content_id("TMDB", str(i)) for i in load_target_tmdb_ids(data_dir, limit)}

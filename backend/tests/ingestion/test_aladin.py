@@ -39,6 +39,8 @@ def test_excluded_categories():
     assert is_excluded_book("국내도서>외국어>토익>Reading")
     assert is_excluded_book("국내도서>수험서/자격증>공무원 수험서>국어")
     assert is_excluded_book("국내도서>컴퓨터/모바일>활용능력>컴퓨터활용능력")
+    # 베스트셀러에는 연재 후속권만 올라온다
+    assert is_excluded_book("국내도서>만화/라이트노벨>본격장르만화")
 
     assert not is_excluded_book("국내도서>소설/시/희곡>영미소설")
     assert not is_excluded_book("국내도서>어린이>동화/명작/고전")

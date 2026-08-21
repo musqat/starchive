@@ -79,3 +79,15 @@ def test_candidates_filter_type(db_session):
 
     assert rows
     assert all(c.type is ContentType.MOVIE for c in rows)
+
+
+@pytest.mark.db  # only_ids 를 주면 그 안에서만 고른다. 카탈로그가 늘어도 평가가 안 흔들린다
+def test_candidates_restricted_to_only_ids(db_session):
+    user = seed_user(db_session)
+    full = candidates.generate(db_session, user.id, ContentType.MOVIE)
+    assert len(full) > 3
+
+    allowed = {c.content_id for c in full[:3]}
+    limited = candidates.generate(db_session, user.id, ContentType.MOVIE, only_ids=allowed)
+
+    assert {c.content_id for c in limited} <= allowed
