@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     ### 외부 API
     TMDB_API_KEY: str | None = None
     ALADIN_TTB_KEY: str | None = None
-    KOBIS_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     ### 배치
     CRON_SECRET: str | None = None

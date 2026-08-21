@@ -13,7 +13,7 @@
 
 | | 수집 기준 | 건수 |
 |---|---|---|
-| 영화 | MovieLens 상위 3,000편 + 2018년 이후 500표 이상 | 4,889 |
+| 영화 | MovieLens 상위 3,000편 + 2018년 이후 500표 이상 | 4,948 |
 | 책 | 알라딘 국내도서 베스트셀러 (만화 제외) | 894 |
 
 줄거리가 있는 것은 `text-embedding-3-small` 로 임베딩해 `vector(1536)` 에 담는다.
@@ -129,7 +129,6 @@ npm run dev
 | `COOKIE_SECURE` | 배포는 `true`. https 에서만 쿠키를 보낸다 |
 | `TMDB_API_KEY` | 영화 수집 |
 | `ALADIN_TTB_KEY` | 책 수집 |
-| `KOBIS_API_KEY` | 한국 영화 수집 |
 | `OPENAI_API_KEY` | 임베딩과 재랭킹 |
 | `CRON_SECRET` | 배치 갱신 인증. Vercel 이 Bearer 로 자동 첨부한다 |
 | `FRONTEND_ORIGIN` | CORS 허용 출처 |
