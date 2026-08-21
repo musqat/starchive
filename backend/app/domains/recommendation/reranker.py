@@ -4,7 +4,7 @@
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import httpx
 
@@ -17,6 +17,7 @@ log = logging.getLogger(__name__)
 
 TOP_K = 10
 TEMPLATE_REASON = "비슷한 작품을 좋아한 분들이 높게 평가했어요"
+RECENT_REASON = "최근 개봉작 중 취향에 가까운 작품이에요"
 
 
 @dataclass
@@ -93,3 +94,22 @@ async def rerank(
                 )
             )
     return ranked
+
+
+def ensure_included(ranked: list[Ranked], must: list[Candidate]) -> list[Ranked]:
+    """빠진 것을 추가하고 순위를 다시 매긴다
+
+    신작은 이웃 점수가 0이라 점수로도 LLM 으로도 상위에 못 온다.
+    그래서 자리를 넣어준다.
+    """
+    present = {r.candidate.content_id for r in ranked}
+    missing = [c for c in must if c.content_id not in present]
+    if not missing:
+        return ranked
+
+    kept = ranked[: TOP_K - len(missing)]
+    kept += [
+        Ranked(candidate=c, rank=0, reason=RECENT_REASON, source=ReasonSource.RECENT)
+        for c in missing
+    ]
+    return [replace(row, rank=i) for i, row in enumerate(kept, start=1)]

@@ -106,7 +106,14 @@ async def build_batch(
         found = candidates.generate(db, user_id, type_)
         if not found:
             continue  # 기록이 없는 매체. 화면에서 안내로 처리한다
-        ranked = await reranker.rerank(client, liked, found, prompt_items(db, found))
+
+        # 후보에 함께 넣어야 LLM 이 이유를 써준다. 안 고르면 아래에서 추가한다
+        recent = candidates.recent_picks(db, user_id, type_)
+        seen = {c.content_id for c in found}
+        pool = found + [c for c in recent if c.content_id not in seen]
+
+        ranked = await reranker.rerank(client, liked, pool, prompt_items(db, pool))
+        ranked = reranker.ensure_included(ranked, recent)
         rows += [
             Recommendation(
                 batch_id=batch_id,

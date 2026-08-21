@@ -44,8 +44,8 @@ export default function RecommendationSection({
 
 function Row({ item }: { item: RecommendationItem }) {
   const { content } = item;
-  // 템플릿은 전 사용자에게 같은 고정 문장이라 열 칸에 반복된다
-  const reason = item.reason_source === "LLM" ? item.reason : null;
+  // 템플릿은 LLM 실패 시 붙는 같은 문장이라 반복된다. 신작 자리 안내는 보여준다
+  const reason = item.reason_source === "TEMPLATE" ? null : item.reason;
 
   return (
     <li className="border-t border-line">

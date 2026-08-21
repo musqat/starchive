@@ -17,7 +17,8 @@ class ReasonSource(enum.StrEnum):
     """LLM이 작성하고 실패시 TEMPLATE"""
 
     LLM = "LLM"
-    TEMPLATE = "TEMPLATE"
+    TEMPLATE = "TEMPLATE"  # LLM 실패
+    RECENT = "RECENT"  # 신작 자리. 실패가 아니라 정상 경로다
 
 
 class Recommendation(Base):
