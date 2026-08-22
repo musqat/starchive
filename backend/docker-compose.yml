@@ -1,0 +1,22 @@
+# 평가용 로컬 DB
+#
+# 평가는 시드 200명의 기록을 지웠다 되돌리고 임베딩을 반복해서 읽는다
+# Neon 에 대고 돌리면 한 회에 수백 MB 가 오가고 무료 티어 전송량(월 5GB)을 넘긴다
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: starchive
+      POSTGRES_PASSWORD: starchive
+      POSTGRES_DB: starchive
+    ports:
+      - "5433:5432" # 로컬에 다른 Postgres 가 있어도 안 겹치게
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U starchive"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:
