@@ -79,7 +79,7 @@ starchive/
         └── lib/           타입, API 클라이언트
 ```
 
-**DB** — Neon(Postgres)
+**DB** — Supabase(Postgres + pgvector). 개발은 `backend/docker-compose.yml` 의 로컬 컨테이너로 한다
 
 **한 테이블** — 영화·책·웹툰을 `contents` 하나에 담고 `type` 으로 구분한다. 매체별
 고유 필드는 `content_metadata`(JSONB). 사용자 기록이 FK 하나로 연결된다.
@@ -91,7 +91,7 @@ starchive/
 
 ## 시작
 
-Python 3.11+ ([uv](https://docs.astral.sh/uv/)), Node 20+, Neon 계정이 필요하다.
+Python 3.11+ ([uv](https://docs.astral.sh/uv/)), Node 20+, Docker 가 필요하다.
 명령은 각 디렉터리 안에서 실행한다.
 
 **백엔드**
@@ -99,6 +99,7 @@ Python 3.11+ ([uv](https://docs.astral.sh/uv/)), Node 20+, Neon 계정이 필요
 ```bash
 cd backend
 cp .env.example .env      # 값 채우기
+docker compose up -d      # 로컬 Postgres + pgvector
 uv sync --all-groups
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
@@ -123,8 +124,8 @@ npm run dev
 
 | 키 | 용도 |
 |---|---|
-| `DATABASE_URL` | Neon **pooler** 주소. API 서버용 |
-| `DIRECT_URL` | Neon 직접 연결. 마이그레이션·대량 적재용 |
+| `DATABASE_URL` | **pooler** 트랜잭션 모드(6543). API 서버용 |
+| `DIRECT_URL` | pooler 세션 모드(5432). 마이그레이션·대량 적재용 |
 | `JWT_SECRET` | 토큰 서명 |
 | `COOKIE_SECURE` | 배포는 `true`. https 에서만 쿠키를 보낸다 |
 | `TMDB_API_KEY` | 영화 수집 |
@@ -195,7 +196,7 @@ uv run pytest -q                                  # 전체
 | 마커 | 필요한 것 |
 |---|---|
 | — | 없음 |
-| `db` | Neon 연결 |
+| `db` | DB 연결. `docker compose up -d` 면 된다 |
 | `external` | TMDB · 알라딘 API |
 
 **배포 의존성** — Vercel 은 `[project].dependencies` 만 설치한다. `app/` 이 `dev`·`etl` 그룹의

@@ -20,7 +20,7 @@ def require_local() -> None:
     """평가 스크립트 가드
 
     평가는 유저마다 임베딩을 읽고 홀드아웃을 지웠다 되돌린다. 한 회에 수백 MB 가 오간다
-    Neon 무료 티어 전송량은 월 5GB 라 몇 번 돌리면 프로덕션 DB 가 통째로 막힌다
+    무료 티어 전송량은 월 5GB 라 몇 번 돌리면 프로덕션 DB 가 통째로 막힌다
     """
     if os.getenv("ALLOW_REMOTE_EVAL"):
         return
