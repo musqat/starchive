@@ -17,7 +17,8 @@ def test_counts_by_type(conn):
     counts = dict(conn.execute(text("select type, count(*) from contents group by type")).all())
 
     assert counts.get("MOVIE", 0) > 2900
-    assert counts.get("BOOK", 0) > 800  # 만화 194권을 뺐다
+    # 베스트셀러는 돌릴 때마다 누적된다. 한 번만 돌린 새 DB 기준으로 잡는다
+    assert counts.get("BOOK", 0) > 700
 
 
 @pytest.mark.db

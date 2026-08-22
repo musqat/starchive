@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session as SessionType
 from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import candidates, pipeline, profile, reranker
 from app.domains.user.models import UserContent
-from app.ingestion.db import Session
+from app.ingestion.db import Session, require_local
 from app.ingestion.movielens import load_eval_content_ids
 from scripts.evaluate import SEED, K, ndcg, pick_users, recall, split
 
@@ -80,6 +80,8 @@ async def compare(
 
 
 async def main() -> None:
+    require_local()
+
     limit = USERS
     if "--users" in sys.argv:
         limit = int(sys.argv[sys.argv.index("--users") + 1])

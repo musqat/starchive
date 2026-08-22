@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session as SessionType
 from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import candidates, profile
 from app.domains.user.models import User, UserContent
-from app.ingestion.db import Session
+from app.ingestion.db import Session, require_local
 from app.ingestion.movielens import load_eval_content_ids
 
 MIN_RATED = 20  # 20% 를 가려 정답 4건 -> 지표 분산을 위해서
@@ -127,6 +127,8 @@ def evaluate_one(db: SessionType, user_id: int, rng: random.Random) -> tuple[flo
 
 
 def main() -> None:
+    require_local()
+
     limit = USERS
     if "--users" in sys.argv:
         limit = int(sys.argv[sys.argv.index("--users") + 1])
