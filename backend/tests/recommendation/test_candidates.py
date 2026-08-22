@@ -91,3 +91,23 @@ def test_candidates_restricted_to_only_ids(db_session):
     limited = candidates.generate(db_session, user.id, ContentType.MOVIE, only_ids=allowed)
 
     assert {c.content_id for c in limited} <= allowed
+
+
+@pytest.mark.db  # 상위 하나만 뽑으면 모두가 같은 신작을 받는다. 상위 N 에서 무작위로 뽑는다
+def test_recent_picks_vary_between_users(db_session):
+    import random
+
+    from app.domains.recommendation.candidates import recent_picks
+
+    users = list(
+        db_session.scalars(select(User.id).where(User.is_seed.is_(True)).order_by(User.id).limit(8))
+    )
+    rng = random.Random(42)
+    picked = [
+        c.content_id
+        for uid in users
+        for c in recent_picks(db_session, uid, ContentType.MOVIE, rng=rng)
+    ]
+
+    assert len(picked) > 8
+    assert len(set(picked)) > len(picked) // 2  # 절반 넘게 서로 다르다

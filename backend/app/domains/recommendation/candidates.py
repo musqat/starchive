@@ -6,6 +6,7 @@
 임베딩은 '어바웃 타임'을 인터스텔라 옆에 못 놓음. 평점과 임베딩을 통합하면 가능
 """
 
+import random
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -28,10 +29,13 @@ POOL = 100  # 뽑아 섞을 개수
 LIMIT = 30
 
 # 신작은 시드 평점이 없어 이웃 점수가 0이다. 점수 경쟁으로는 상위 10에 못 올라온다
-# 2칸이면 Recall 0.150 -> 0.130 (인기순 0.097 대비 +34%), 커버리지 82 -> 101편
+# 2개면 Recall 0.150 -> 0.130 (인기순 0.097 대비 +34%), 커버리지 82 -> 101편
 RECENT_SLOTS = 2
 RECENT_SINCE = date(2018, 1, 1)  # MovieLens 가 여기서 끝난다
 FRESH_DAYS = 730  # 편수로 밀려 최근작이 안 뽑히므로 최근 2년을 따로 본다
+# 유사도 상위 몇 개에서 무작위로 뽑나. 1등 0.658 과 20등 0.630 은 실질 차이가 없는데
+# 순서 하나로 갈려 모두가 1등을 가져갔다. 배치가 하루 한 번이라 그 안에서는 고정된다
+RECENT_SAMPLE = 20
 
 
 @dataclass
@@ -214,6 +218,7 @@ def recent_picks(
     user_id: int,
     type_: ContentType | None = None,
     limit: int = RECENT_SLOTS,
+    rng: random.Random | None = None,
 ) -> list[Candidate]:
     """신작 자리. 내용 점수로만 뽑는다 — 이웃 점수가 0이라 쓸 수 없다
 
@@ -223,13 +228,16 @@ def recent_picks(
     if not vector or limit <= 0:
         return []
 
+    picker = rng or random
     fresh_n = max(1, limit // 2)
     picked: dict[str, float] = {}
     for want, fresh in ((fresh_n, True), (limit - fresh_n, False)):
         pool = _recent_ids(db, type_, fresh) - set(picked)
         if not pool or want <= 0:
             continue
-        picked |= by_content(db, vector, user_id, type_, limit=want, only_ids=pool)
+        scored = by_content(db, vector, user_id, type_, limit=RECENT_SAMPLE, only_ids=pool)
+        for cid in picker.sample(sorted(scored), min(want, len(scored))):
+            picked[cid] = scored[cid]
 
     if not picked:
         return []
