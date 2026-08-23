@@ -167,7 +167,7 @@ uv run python -m scripts.ingest_movies    # 6~8분
 uv run python -m scripts.ingest_books     # 3분
 uv run python -m scripts.ingest_recent    # 2018년 이후 영화
 uv run python -m scripts.ingest_seed      # MovieLens 평점 → 시드 계정
-uv run python -m scripts.embed --apply    # 줄거리 임베딩
+uv run python -m scripts.embed --apply    # 임베딩 (영화는 분위기 문장 포함)
 ```
 
 `id` 충돌 시 갱신한다(upsert). 삭제는 하지 않으므로 베스트셀러 목록이 바뀌면
