@@ -53,8 +53,7 @@ MIN_TITLE_WORD = 2  # 한 글자 겹침은 우연이다
 
 
 def _leaks_title(title: str, query: str) -> bool:
-    """제목 단어가 질의에 그대로 들어갔나 확인
-    """
+    """제목 단어가 질의에 그대로 들어갔나 확인"""
     head = title.split(" - ")[0].split(":")[0]  # 부제는 뺀다
     words = [w for w in head.split() if len(w) >= MIN_TITLE_WORD]
     return any(w in query for w in words)
