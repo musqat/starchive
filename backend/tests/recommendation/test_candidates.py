@@ -65,9 +65,8 @@ def test_candidate_score_is_weighted_sum(db_session):
     rows = candidates.generate(db_session, user.id, limit=5)
 
     for c in rows:
-        expected = (
-            candidates.CONTENT_WEIGHT * c.content_score + candidates.TASTE_WEIGHT * c.taste_score
-        )
+        content_weight, taste_weight = candidates.DEFAULT_WEIGHT
+        expected = content_weight * c.content_score + taste_weight * c.taste_score
         assert c.score == pytest.approx(expected)
 
 

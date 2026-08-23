@@ -17,19 +17,29 @@ from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import dedupe, profile
 from app.domains.user.models import UserContent
 
-# 측정 결과 -> 0.7:0.3 은 Recall@10 0.021 로 인기순(0.097)에 졌다
-# 두 점수의 범위 차이 때문 —> 내용 기반은 바닥이 0.35, 이웃은 바닥이 0
-# -> 점수에서 차이가 나고 시작함
-CONTENT_WEIGHT = 0.3
-TASTE_WEIGHT = 0.7
+# (내용, 이웃) 매체마다 쓸 수 있는 신호가 다르다
+#
+# 영화 — 내용 점수는 자기 힘으로 한 편도 못 올리고 이웃 점수가 뽑은 것의 순서만 흔든다.
+#        0.3 -> 0.0 으로 Recall 0.178 -> 0.190, NDCG 0.285 -> 0.332
+# 책   — 시드가 MovieLens 라 도서 평점이 0건이다. 이웃 점수가 전부 0이라 내용 점수만 돈다.
+#        측정된 적 없다
+WEIGHTS = {
+    ContentType.MOVIE: (0.0, 1.0),
+    ContentType.BOOK: (0.3, 0.7),
+}
+DEFAULT_WEIGHT = (0.3, 0.7)  # 매체를 안 가릴 때
 
 MIN_SIMILARITY = 0.35  # 최소 유사도 - 이 유사도 이상만 체크
 MIN_PEER_OVERLAP = 2  # 최소 작품 겹친 이웃수 - 1의 경우 하나만 겹쳐도 추천되서 2 이상으로
 
-# 이웃 점수를 인기의 몇 제곱으로 나누나. 0 이면 안 나눔, 1 이면 인기를 완전히 지움
+# 이웃 점수를 좋아요 수의 몇 제곱으로 나누나. 0 이면 안 나눔, 1 이면 인기를 완전히 지움
 # 나누기 전 이웃 점수는 인기 순서와 83.5% 일치했다 — 모두가 좋아하는 작품은
 # 내 취향을 알려주지 않는다. 남들 안 보는 작품을 겹쳐 좋아하는 것이 신호다
-POPULARITY_POWER = 0.6
+#       Recall  NDCG  작품수
+# 0      0.149 0.258    199
+# 0.7    0.190 0.332    369
+# 0.8    0.159 0.260    628   좋아요 두세 개짜리가 상위를 덮는다
+POPULARITY_POWER = 0.7
 POOL = 100  # 뽑아 섞을 개수
 LIMIT = 30
 
@@ -207,13 +217,14 @@ def generate(
         return []
 
     rows = db.execute(_with_series().where(Content.id.in_(scores))).all()
+    content_weight, taste_weight = WEIGHTS.get(type_, DEFAULT_WEIGHT)
 
     candidates = [
         Candidate(
             content_id=row.id,
             title=row.title,
             type=row.type,
-            score=CONTENT_WEIGHT * scores[row.id][0] + TASTE_WEIGHT * scores[row.id][1],
+            score=content_weight * scores[row.id][0] + taste_weight * scores[row.id][1],
             content_score=scores[row.id][0],
             taste_score=scores[row.id][1],
             series=row.series,
@@ -282,7 +293,7 @@ def recent_picks(
             content_id=row.id,
             title=row.title,
             type=row.type,
-            score=CONTENT_WEIGHT * picked[row.id],
+            score=picked[row.id],  # 이웃 점수가 없어 내용 점수가 곧 점수다
             content_score=picked[row.id],
             taste_score=0.0,
             series=row.series,
