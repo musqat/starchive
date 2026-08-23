@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
 
+from app.core.sanitize import strip_tags
 from app.core.security import MAX_PASSWORD_BYTES
 from app.domains.content.schemas import ContentSummary
 from app.domains.user.models import MEMO_MAX_LENGTH, ContentStatus
@@ -17,11 +18,25 @@ def _fits_bcrypt(value: str) -> str:
 
 Password = Annotated[str, Field(min_length=8), AfterValidator(_fits_bcrypt)]
 
+# 공개 메모로 남에게 나가는 필드는 태그를 걷어낸다
+Public = Annotated[str, AfterValidator(strip_tags)]
+
+
+def _clean_nickname(value: str) -> str:
+    """태그를 걷어낸다. 태그만 있으면 빈값이 되므로 막는다"""
+    cleaned = strip_tags(value).strip()
+    if not cleaned:
+        raise ValueError("닉네임에 표시할 수 있는 문자가 없음")
+    return cleaned
+
+
+Nickname = Annotated[str, Field(min_length=1, max_length=30), AfterValidator(_clean_nickname)]
+
 
 class SignUpIn(BaseModel):
     email: EmailStr
     password: Password
-    nickname: str = Field(min_length=1, max_length=30)
+    nickname: Nickname
 
 
 class LoginIn(BaseModel):
@@ -56,7 +71,7 @@ class RecordIn(BaseModel):
     rating: float | None = Field(None, ge=0.5, le=5, multiple_of=0.5)
     liked: bool | None = None
     recommended: bool | None = None
-    memo: str | None = Field(None, max_length=MEMO_MAX_LENGTH)
+    memo: Public | None = Field(None, max_length=MEMO_MAX_LENGTH)
     memo_public: bool | None = None
 
 
