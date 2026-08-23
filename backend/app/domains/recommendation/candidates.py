@@ -28,6 +28,10 @@ MIN_PEER_OVERLAP = 2  # 최소 작품 겹친 이웃수 - 1의 경우 하나만 �
 POOL = 100  # 뽑아 섞을 개수
 LIMIT = 30
 
+# 한 시리즈에서 몇 편까지. 200명 중 90명이 같은 시리즈를 2편 이상 받았고
+# 대부분 스타워즈와 반지의 제왕이었다. 값은 측정으로 정한다
+MAX_PER_SERIES = 1
+
 # 신작은 시드 평점이 없어 이웃 점수가 0이다. 점수 경쟁으로는 상위 10에 못 올라온다
 # 2개면 Recall 0.150 -> 0.130 (인기순 0.097 대비 +34%), 커버리지 82 -> 101편
 RECENT_SLOTS = 2
@@ -46,10 +50,20 @@ class Candidate:
     score: float
     content_score: float
     taste_score: float
+    series: str | None = None  # TMDB 컬렉션 id. 없으면 단독 영화
 
 
 def _exclude_mine(user_id: int) -> Select:
     return select(UserContent.content_id).where(UserContent.user_id == user_id)
+
+
+def _with_series() -> Select:
+    """후보 표시용 컬럼 + 시리즈 id
+
+    JSONB 를 통째로 꺼내면 출연진·시청처까지 딸려온다. 경로만 뽑는다
+    """
+    series = Content.content_metadata["collection"]["id"].astext.label("series")
+    return select(Content.id, Content.title, Content.type, series)
 
 
 def by_content(
@@ -172,9 +186,7 @@ def generate(
     if not scores:
         return []
 
-    rows = db.execute(
-        select(Content.id, Content.title, Content.type).where(Content.id.in_(scores))
-    ).all()
+    rows = db.execute(_with_series().where(Content.id.in_(scores))).all()
 
     candidates = [
         Candidate(
@@ -184,12 +196,14 @@ def generate(
             score=CONTENT_WEIGHT * scores[row.id][0] + TASTE_WEIGHT * scores[row.id][1],
             content_score=scores[row.id][0],
             taste_score=scores[row.id][1],
+            series=row.series,
         )
         for row in rows
     ]
     candidates.sort(key=lambda c: c.score, reverse=True)
-    # 판본만 다른 것을 빼려면 점수순으로 정렬
-    return dedupe.drop_duplicates(candidates, _recorded_titles(db, user_id))[:limit]
+    # 판본만 다른 것과 같은 시리즈를 빼려면 점수순으로 정렬
+    kept = dedupe.drop_duplicates(candidates, _recorded_titles(db, user_id))
+    return dedupe.cap_series(kept, MAX_PER_SERIES)[:limit]
 
 
 def _recorded_titles(db: Session, user_id: int) -> set[str]:
@@ -242,9 +256,7 @@ def recent_picks(
     if not picked:
         return []
 
-    rows = db.execute(
-        select(Content.id, Content.title, Content.type).where(Content.id.in_(picked))
-    ).all()
+    rows = db.execute(_with_series().where(Content.id.in_(picked))).all()
     found = [
         Candidate(
             content_id=row.id,
@@ -253,6 +265,7 @@ def recent_picks(
             score=CONTENT_WEIGHT * picked[row.id],
             content_score=picked[row.id],
             taste_score=0.0,
+            series=row.series,
         )
         for row in rows
     ]
