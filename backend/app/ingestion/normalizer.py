@@ -129,6 +129,14 @@ def build_embedding_text(
     return "\n".join(lines)
 
 
+def _collection(data: dict) -> dict | None:
+    """시리즈. 제목으로는 못 묶는 것을 묶는다 — 에이리언과 프로메테우스가 한 시리즈다"""
+    collection = data.get("belongs_to_collection")
+    if not collection:
+        return None
+    return {"id": collection["id"], "name": collection.get("name")}
+
+
 def normalize_movie(data: dict) -> dict:
     """TMDB /movie/{id} 응답을 Content 컬럼명 dict 로 변환"""
     poster = data.get("poster_path")
@@ -153,6 +161,7 @@ def normalize_movie(data: dict) -> dict:
             "original_title": data.get("original_title"),
             "tagline": data.get("tagline"),
             "backdrop_path": data.get("backdrop_path"),
+            "collection": _collection(data),
             "providers": _providers(data),
         },
     }

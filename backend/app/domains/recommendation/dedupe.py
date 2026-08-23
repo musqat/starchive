@@ -25,6 +25,23 @@ def normalize(title: str) -> str:
     return _SPACES.sub(" ", text).strip().casefold()
 
 
+def cap_series(items: list, limit: int) -> list:
+    """한 시리즈에서 limit 편까지만. 점수순으로 들어온다고 가정한다
+
+    스타워즈 6편이 상위 10을 나눠 갖는다. 시드가 시리즈 전편에 고르게 높은 점수를 준 탓
+    """
+    counts: dict[str, int] = {}
+    kept = []
+    for item in items:
+        series = getattr(item, "series", None)
+        if series:
+            counts[series] = counts.get(series, 0) + 1
+            if counts[series] > limit:
+                continue
+        kept.append(item)
+    return kept
+
+
 def drop_duplicates(items: list, seen: set[str], key=lambda x: x.title) -> list:
     """정규화 제목이 겹치면 앞의 것만 남긴다. seen 은 호출한 쪽에서 채워 보낸다"""
     kept = []

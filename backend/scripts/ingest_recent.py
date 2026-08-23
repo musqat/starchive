@@ -3,9 +3,10 @@
 목록은 TMDB discover 로 만들고 상세는 기존 fetch_movie 로 받는다.
 id 충돌 시 갱신하므로 여러 번 돌려도 된다
 
-    uv run python -m scripts.ingest_recent          # 대상 수만
-    uv run python -m scripts.ingest_recent --apply  # 실행
+    uv run python -m scripts.ingest_recent            # 대상 수만
+    uv run python -m scripts.ingest_recent --apply    # 새로 나온 것만
     uv run python -m scripts.ingest_recent --apply --pages 5
+    uv run python -m scripts.ingest_recent --apply --refresh  # 있는 것도 다시 받는다
 """
 
 import asyncio
@@ -44,7 +45,10 @@ async def collect_ids(client: httpx.AsyncClient, max_pages: int | None) -> list[
 
 
 def unseen(ids: list[int]) -> list[int]:
-    """이미 있는 것은 상세를 다시 받지 않는다"""
+    """DB 에 있는 영화는 새로 수집하지 않는다
+
+    discover 목록은 매번 갱신된다. 전부 다시 받으면 실행 시간만 길어진다
+    """
     wanted = {make_content_id("TMDB", str(i)): i for i in ids}
     with Session() as session:
         known = set(session.scalars(select(Content.id).where(Content.id.in_(wanted))))
@@ -59,9 +63,10 @@ async def main() -> None:
 
     async with httpx.AsyncClient(timeout=15) as client:
         ids = await collect_ids(client, max_pages)
-        fresh = unseen(ids)
+        # 저장 항목을 추가하면 DB 에 있는 영화도 다시 수집해야 한다
+        fresh = ids if "--refresh" in sys.argv else unseen(ids)
         print(f"{DISCOVER_SINCE} 이후 {MIN_VOTE_COUNT}표 이상 {len(ids):,}편")
-        print(f"이미 있음 {len(ids) - len(fresh):,}편 / 새로 받을 것 {len(fresh):,}편")
+        print(f"이미 있음 {len(ids) - len(fresh):,}편 / 받을 것 {len(fresh):,}편")
 
         if not apply:
             print("--apply 를 붙이면 실행한다")
