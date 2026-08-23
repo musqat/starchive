@@ -25,6 +25,11 @@ TASTE_WEIGHT = 0.7
 
 MIN_SIMILARITY = 0.35  # 최소 유사도 - 이 유사도 이상만 체크
 MIN_PEER_OVERLAP = 2  # 최소 작품 겹친 이웃수 - 1의 경우 하나만 겹쳐도 추천되서 2 이상으로
+
+# 이웃 점수를 인기의 몇 제곱으로 나누나. 0 이면 안 나눔, 1 이면 인기를 완전히 지움
+# 나누기 전 이웃 점수는 인기 순서와 83.5% 일치했다 — 모두가 좋아하는 작품은
+# 내 취향을 알려주지 않는다. 남들 안 보는 작품을 겹쳐 좋아하는 것이 신호다
+POPULARITY_POWER = 0.6
 POOL = 100  # 뽑아 섞을 개수
 LIMIT = 30
 
@@ -143,15 +148,27 @@ def by_taste(
         .subquery()
     )
 
-    signal = func.sum(peers.c.weight).label("signal")
+    # 인기 = 나 말고 다른 사람들이 좋아한 횟수. 나를 넣으면 평가에서 정답만 1 줄어 유리해진다
+    popularity = (
+        select(UserContent.content_id, func.count().label("n"))
+        .where(UserContent.rating >= profile.LIKED_RATING, UserContent.user_id != user_id)
+        .group_by(UserContent.content_id)
+        .subquery()
+    )
+
+    # 모두가 좋아하는 작품은 내 취향을 알려주지 않는다. 인기로 나눠 겹침의 희소성만 남긴다
+    signal = (
+        func.sum(peers.c.weight) / func.power(cast(popularity.c.n, Float), POPULARITY_POWER)
+    ).label("signal")
     stmt = (
         select(UserContent.content_id, signal)
         .join(peers, peers.c.user_id == UserContent.user_id)
+        .join(popularity, popularity.c.content_id == UserContent.content_id)
         .where(
             UserContent.rating >= profile.LIKED_RATING,
             UserContent.content_id.not_in(_exclude_mine(user_id)),
         )
-        .group_by(UserContent.content_id)
+        .group_by(UserContent.content_id, popularity.c.n)
         .order_by(signal.desc())
         .limit(limit)
     )
