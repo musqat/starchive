@@ -109,5 +109,5 @@ def test_recent_picks_vary_between_users(db_session):
         for c in recent_picks(db_session, uid, ContentType.MOVIE, rng=rng)
     ]
 
-    assert len(picked) > 8
+    assert len(picked) >= len(users)  # 유저마다 최소 한 편
     assert len(set(picked)) > len(picked) // 2  # 절반 넘게 서로 다르다
