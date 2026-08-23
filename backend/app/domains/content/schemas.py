@@ -97,3 +97,13 @@ class ContentPage(BaseModel):
     total: int
     page: int
     size: int
+
+
+class SearchResult(BaseModel):
+    """검색 응답
+
+    comment 는 자연어 질의일 때만 채운다. LLM 이 결과를 보고 쓴 한 줄
+    """
+
+    comment: str | None
+    items: list[ContentSummary]

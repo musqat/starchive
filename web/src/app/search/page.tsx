@@ -1,11 +1,10 @@
 import Link from "next/link";
 
 import ContentGrid from "@/components/ContentGrid";
-import Pagination from "@/components/Pagination";
-import { getContents } from "@/lib/api";
-import type { ContentType } from "@/lib/types";
+import { searchContents } from "@/lib/api";
+import type { ContentSummary, ContentType } from "@/lib/types";
 
-const SIZE = 20;
+const PREVIEW = 4; // 전체 뷰에서 매체별 미리보기 개수
 
 const CHIPS: { label: string; type?: "MOVIE" | "BOOK" }[] = [
   { label: "전체" },
@@ -16,104 +15,118 @@ const CHIPS: { label: string; type?: "MOVIE" | "BOOK" }[] = [
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: ContentType; page?: string }>;
+  searchParams: Promise<{ q?: string; type?: ContentType }>;
 }) {
-  const { q = "", type, page: rawPage } = await searchParams;
-  const page = Number(rawPage ?? 1);
+  const { q = "", type } = await searchParams;
 
   if (!q) {
     return <p className="py-16 text-center text-sm text-muted">검색어를 입력하세요</p>;
   }
 
-  // 칩에 붙일 건수. size=1 로 total 만 사용 (size=0 은 API 가 거절)
-  const [movies, books] = await Promise.all([
-    getContents({ type: "MOVIE", q, size: 1 }),
-    getContents({ type: "BOOK", q, size: 1 }),
-  ]);
-  const counts = { MOVIE: movies.total, BOOK: books.total };
-  const total = counts.MOVIE + counts.BOOK;
-
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {CHIPS.map((chip) => {
-          const active = chip.type === type;
-          const n = chip.type ? counts[chip.type] : total;
-          return (
-            <Link
-              key={chip.label}
-              href={`/search?${new URLSearchParams({ q, ...(chip.type ? { type: chip.type } : {}) })}`}
-              className={`rounded-full px-3 py-1 text-[13px] ${
-                active ? "bg-foreground text-background" : "bg-fill text-muted"
-              }`}
-            >
-              {chip.label} {n.toLocaleString()}
-            </Link>
-          );
-        })}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <Chips q={q} active={type} />
+        <QueryLabel q={q} />
       </div>
-
-      {total === 0 ? (
-        <p className="py-16 text-center text-sm text-muted">
-          &ldquo;{q}&rdquo; 검색 결과가 없습니다
-        </p>
-      ) : type ? (
-        <SingleType q={q} type={type} page={page} />
-      ) : (
-        <>
-          {counts.MOVIE > 0 && <Group q={q} type="MOVIE" label="영화" total={counts.MOVIE} />}
-          {counts.BOOK > 0 && <Group q={q} type="BOOK" label="책" total={counts.BOOK} />}
-        </>
-      )}
+      {type ? <Single q={q} type={type} /> : <Both q={q} />}
     </>
   );
 }
 
-async function SingleType({
-  q,
-  type,
-  page,
-}: {
-  q: string;
-  type: ContentType;
-  page: number;
-}) {
-  const data = await getContents({ type, q, page, size: SIZE });
+function QueryLabel({ q }: { q: string }) {
+  const shown = q.length > 20 ? `${q.slice(0, 20)}…` : q;
+  return (
+    <p className="shrink-0 text-[13px] text-muted">
+      <span className="text-foreground">&ldquo;{shown}&rdquo;</span> 검색 결과
+    </p>
+  );
+}
+
+function Chips({ q, active }: { q: string; active?: ContentType }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {CHIPS.map((chip) => (
+        <Link
+          key={chip.label}
+          href={`/search?${new URLSearchParams({ q, ...(chip.type ? { type: chip.type } : {}) })}`}
+          className={`rounded-full px-3 py-1 text-[13px] ${
+            chip.type === active ? "bg-foreground text-background" : "bg-fill text-muted"
+          }`}
+        >
+          {chip.label}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function Empty({ q }: { q: string }) {
+  return (
+    <p className="py-16 text-center text-sm text-muted">
+      &ldquo;{q}&rdquo; 검색 결과가 없습니다
+    </p>
+  );
+}
+
+// 자연어 질의일 때 LLM 이 결과를 보고 쓴 한 줄
+function Comment({ text }: { text: string }) {
+  return (
+    <p className="mb-5 rounded-lg bg-fill px-4 py-3 text-sm leading-relaxed">
+      <span className="mr-1">✨</span>
+      {text}
+    </p>
+  );
+}
+
+async function Single({ q, type }: { q: string; type: ContentType }) {
+  const { comment, items } = await searchContents(q, type);
+  if (items.length === 0) return <Empty q={q} />;
+  return (
+    <>
+      {comment && <Comment text={comment} />}
+      <ContentGrid items={items} />
+    </>
+  );
+}
+
+async function Both({ q }: { q: string }) {
+  const [movies, books] = await Promise.all([
+    searchContents(q, "MOVIE"),
+    searchContents(q, "BOOK"),
+  ]);
+
+  if (movies.items.length + books.items.length === 0) {
+    return <Empty q={q} />;
+  }
+
+  const comment = movies.comment ?? books.comment;
 
   return (
     <>
-      <ContentGrid items={data.items} />
-      <Pagination
-        basePath="/search"
-        page={page}
-        lastPage={Math.ceil(data.total / SIZE)}
-        extra={{ q, type }}
-      />
+      {comment && <Comment text={comment} />}
+      {movies.items.length > 0 && <Group q={q} type="MOVIE" label="영화" items={movies.items} />}
+      {books.items.length > 0 && <Group q={q} type="BOOK" label="책" items={books.items} />}
     </>
   );
 }
 
-async function Group({
+function Group({
   q,
   type,
   label,
-  total,
+  items,
 }: {
   q: string;
   type: ContentType;
   label: string;
-  total: number;
+  items: ContentSummary[];
 }) {
-  const data = await getContents({ type, q, size: 4 });
-  const more = total > data.items.length;
-
   return (
     <section className="mb-8">
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-[15px] font-medium">
-          {label} <span className="text-muted">{total.toLocaleString()}</span>
-        </h2>
-        {more && (
+        <h2 className="text-[15px] font-medium">{label}</h2>
+        {items.length > PREVIEW && (
           <Link
             href={`/search?${new URLSearchParams({ q, type })}`}
             className="text-[13px] text-muted"
@@ -122,7 +135,7 @@ async function Group({
           </Link>
         )}
       </div>
-      <ContentGrid items={data.items} />
+      <ContentGrid items={items.slice(0, PREVIEW)} />
     </section>
   );
 }
