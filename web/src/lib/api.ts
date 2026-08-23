@@ -8,6 +8,7 @@ import type {
   LibraryItem,
   PublicMemo,
   RecommendationList,
+  SearchResult,
   SortKey,
   SortOrder,
   User,
@@ -52,6 +53,12 @@ async function get<T>(path: string): Promise<T> {
 
 export function getContents(params: ListParams = {}): Promise<ContentPage> {
   return get<ContentPage>(`/contents${toQuery(params)}`);
+}
+
+// 하이브리드 검색 — 제목·감독·배우는 정확 매칭, 분위기는 벡터. 자연어면 LLM 코멘트도
+export function searchContents(q: string, type?: ContentType): Promise<SearchResult> {
+  const params = new URLSearchParams({ q, ...(type ? { type } : {}) });
+  return get<SearchResult>(`/search?${params}`);
 }
 
 export function getContent(id: string): Promise<ContentDetail> {

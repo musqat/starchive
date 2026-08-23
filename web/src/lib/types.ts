@@ -41,6 +41,12 @@ export type ContentPage = {
   size: number;
 };
 
+export type SearchResult = {
+  // 자연어 질의일 때만. LLM 이 결과를 보고 쓴 한 줄
+  comment: string | null;
+  items: ContentSummary[];
+};
+
 export type SortKey = "popular" | "rating" | "recent";
 export type SortOrder = "desc" | "asc";
 

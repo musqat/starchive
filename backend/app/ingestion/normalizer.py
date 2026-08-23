@@ -109,11 +109,17 @@ def build_embedding_text(
     genre: list[str] | None,
     creator: str | None,
     description: str | None,
+    mood: str | None = None,
 ) -> str | None:
     """임베딩에 넣을 텍스트
 
     줄거리만 쓰면 알라딘 책소개처럼 홍보 문구가 섞였을 때 내용이 묻힌다.
     제목·장르를 함께 넣어 작품 쪽으로 끌어당긴다.
+
+    mood는 검색용이다. 영화 줄거리는 사건 나열이라 "비 오는 날 볼 영화"
+    같은 질의와 안 맞는다. 분위기·감정으로 다시 쓴 문장을 얹으면 질의 공간에 가까워진다.
+    "그 영화 하나 찾기" 지표(R@10)는 거의 안 오르지만, "긴장감 스릴러" 를 치면
+    액션·재난 대신 실제 스릴러가 나온다
 
     줄거리가 없으면 만들지 않는다 — 제목만으로는 어느 작품과도 어중간하게 가까워진다
     """
@@ -125,6 +131,8 @@ def build_embedding_text(
         lines.append(", ".join(genre))
     if creator:
         lines.append(creator)
+    if mood:
+        lines.append(mood)
     lines.append(description)
     return "\n".join(lines)
 
