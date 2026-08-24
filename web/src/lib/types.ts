@@ -89,6 +89,7 @@ export type RecommendationList = {
   generated_at: string | null;
   rated_count: number;
   required_count: number;
+  required_rating: number;
 };
 
 export type RefreshResult = {

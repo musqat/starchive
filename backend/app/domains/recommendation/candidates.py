@@ -17,6 +17,9 @@ from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import dedupe, profile
 from app.domains.user.models import UserContent
 
+# 아래 수치는 LIKED_RATING 이 4.0 이던 때 잰 값이다. 3.0 으로 내린 뒤
+# 절대값은 낮아졌지만(Recall 0.190 -> 0.173) 인기순 대비 배율은 1.94 와 1.97 로 같다
+#
 # (내용, 이웃) 매체마다 쓸 수 있는 신호가 다르다
 #
 # 영화 — 내용 점수는 자기 힘으로 한 편도 못 올리고 이웃 점수가 뽑은 것의 순서만 흔든다.
@@ -30,7 +33,9 @@ WEIGHTS = {
 DEFAULT_WEIGHT = (0.3, 0.7)  # 매체를 안 가릴 때
 
 MIN_SIMILARITY = 0.35  # 최소 유사도 - 이 유사도 이상만 체크
-MIN_PEER_OVERLAP = 2  # 최소 작품 겹친 이웃수 - 1의 경우 하나만 겹쳐도 추천되서 2 이상으로
+# 최소 작품 겹친 이웃수. 1이면 하나만 겹쳐도 이웃이 된다.
+# 3, 4 도 재봤지만 Recall 0.177, 0.167 로 갈리고 콜드 스타트 개인화도 안 늘었다
+MIN_PEER_OVERLAP = 2
 
 # 이웃 점수를 좋아요 수의 몇 제곱으로 나누나. 0 이면 안 나눔, 1 이면 인기를 완전히 지움
 # 나누기 전 이웃 점수는 인기 순서와 83.5% 일치했다 — 모두가 좋아하는 작품은

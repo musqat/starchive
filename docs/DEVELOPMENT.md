@@ -146,6 +146,17 @@ cd backend && uv run uvicorn app.main:app --reload    # 다른 터미널
 cd web && npm run e2e
 ```
 
+**CI** — PR 마다 `.github/workflows/ci.yml` 이 돈다.
+
+```
+backend   pytest (db·external 제외) · 배포 의존성
+web       빌드 · typecheck · lint
+```
+
+`db` 표시가 붙은 것과 E2E 는 안 돈다. Postgres 를 띄우고 백엔드를 기동해야 해서
+로컬에서 돌린다. 프론트는 빌드를 먼저 한다 — `LayoutProps` 같은 라우트 타입을
+`next` 가 빌드 때 만들어, 건너뛰면 `tsc` 가 못 찾는다.
+
 <br>
 
 ## 배포

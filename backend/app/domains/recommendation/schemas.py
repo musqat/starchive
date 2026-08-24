@@ -34,15 +34,17 @@ class RecommendationList(BaseModel):
                 "generated_at": "2026-08-18T01:20:00",
                 "rated_count": 9,
                 "required_count": 5,
+                "required_rating": 4.0,
             }
         }
     )
 
     items: list[RecommendationItem]
     generated_at: datetime | None
-    # 화면이 "몇 편 더 기록하면 됩니다" 를 그리는 데 쓴다
+    # 화면이 "★4 이상 몇 편 더" 를 그리는 데 쓴다
     rated_count: int
     required_count: int
+    required_rating: float
 
 
 class RefreshResult(BaseModel):

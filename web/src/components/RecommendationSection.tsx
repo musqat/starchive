@@ -29,6 +29,7 @@ export default function RecommendationSection({
           type={type}
           rated={data.rated_count}
           required={data.required_count}
+          requiredRating={data.required_rating}
           action={action}
         />
       ) : (

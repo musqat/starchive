@@ -18,7 +18,8 @@ from app.domains.user.models import User, UserContent
 
 TYPES = (ContentType.MOVIE, ContentType.BOOK)
 
-# 콜드 스타트 곡선. 2편은 인기순의 0.72배, 3편은 동점, 5편부터 앞선다
+# 콜드 스타트 곡선(400명, 정답 4건 고정). 인기순 대비 배율이
+# 3편 0.50 → 5편 0.83 → 7편 1.06 → 10편 1.26 이다.
 MIN_RATED = 5
 
 
