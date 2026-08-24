@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.domains.content.models import Content
 
-engine = create_engine(settings.DIRECT_URL)
+engine = create_engine(settings.DIRECT_URL or settings.DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
 LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "db"})
