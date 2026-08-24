@@ -6,6 +6,10 @@ import { getMe, getRecommendations } from "@/lib/api";
 
 export const metadata = { title: "추천 · starchive" };
 
+// 이 아래로는 이웃이 넓게 잡혀 인기작이 섞인다. 인기순 대비 배율이
+// 5편 0.83, 7편 1.06, 10편 1.26 이다
+const WELL_RATED = 10;
+
 function formatDate(value: string): string {
   const date = new Date(value);
   return `${date.getMonth() + 1}월 ${date.getDate()}일`;
@@ -39,6 +43,9 @@ export default async function RecommendationsPage() {
         {hasAny
           ? `기록한 ${rated}편과 비슷한 취향을 가진 사람들의 평가를 함께 봤어요`
           : "영화나 책을 평가하면 취향에 맞는 작품을 찾아드려요"}
+        {hasAny && rated < WELL_RATED && (
+          <> · 기록이 적어 인기작이 섞여요. {WELL_RATED}편쯤부터 취향이 뚜렷해져요</>
+        )}
       </p>
 
       <RecommendationSection

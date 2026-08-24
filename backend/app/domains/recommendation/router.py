@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.domains.content.models import ContentType
-from app.domains.recommendation import pipeline
+from app.domains.recommendation import pipeline, profile
 from app.domains.recommendation.schemas import RecommendationList, RefreshResult
 from app.domains.user.models import User
 
@@ -25,6 +25,7 @@ def _payload(db: Session, user: User, type_: ContentType) -> RecommendationList:
         generated_at=rows[0].generated_at if rows else None,
         rated_count=pipeline.rated_count(db, user.id, type_),
         required_count=pipeline.MIN_RATED,
+        required_rating=profile.LIKED_RATING,
     )
 
 

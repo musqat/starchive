@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.domains.content.models import Content, ContentType
 from app.domains.user.models import UserContent
 
-LIKED_RATING = 4.0  # 이 위면 좋아한 것으로 봄
+LIKED_RATING = 3.0  # 이 위면 좋아한 것으로 봄
 MIN_LIKED = 3  # 1~2건 평균은 한쪽으로 쏠림
 FALLBACK_LIMIT = 10
 DIMENSIONS = 1536

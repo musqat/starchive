@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.domains.content.models import Content, ContentType
-from app.domains.recommendation import pipeline
+from app.domains.recommendation import pipeline, profile
 from app.domains.recommendation.models import ReasonSource, Recommendation
 from app.domains.user.models import ContentStatus, User, UserContent
 
@@ -81,6 +81,7 @@ def test_empty_without_batch(auth_client):
     assert body["generated_at"] is None
     assert body["rated_count"] == 0
     assert body["required_count"] == pipeline.MIN_RATED
+    assert body["required_rating"] == profile.LIKED_RATING
 
 
 @pytest.mark.db  # 저장된 배치를 순위대로 낸다
