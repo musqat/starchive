@@ -3,6 +3,8 @@
 영화와 책을 찾고, 기록하고, 추천받는 서비스
 측정으로 만든 추천, 의미로 찾는 검색
 
+[![CI](https://github.com/musqat/starchive/actions/workflows/ci.yml/badge.svg)](https://github.com/musqat/starchive/actions/workflows/ci.yml)
+
 **[starchive-front.vercel.app](https://starchive-front.vercel.app)**
 
 ![홈 — 취향 추천과 인기 목록](docs/홈화면.png)
