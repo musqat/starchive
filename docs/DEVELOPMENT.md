@@ -137,7 +137,7 @@ npm run typecheck
 npm run lint
 ```
 
-**E2E** — Playwright. 브라우저부터 DB 까지 관통하므로 백엔드가 떠 있어야 한다.
+**E2E** — Playwright. 브라우저부터 DB 까지 관통해서 백엔드를 먼저 띄운다.
 
 ```bash
 npx playwright install chromium    # 최초 1회
