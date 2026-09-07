@@ -92,7 +92,7 @@ def test_candidates_restricted_to_only_ids(db_session):
     assert {c.content_id for c in limited} <= allowed
 
 
-@pytest.mark.db  # 책은 이웃 신호가 0 이라 내용 점수로만 줄을 선다. 가중치를 전역 0 에 두면 순서가 무작위가 된다
+@pytest.mark.db  # 책은 내용 점수로만 줄을 선다. 가중치가 전역 0 이면 순서가 무작위가 된다
 def test_book_candidates_ranked_by_content(db_session, client, credentials):
     client.post("/auth/signup", json=credentials)
     user = db_session.scalar(select(User).where(User.email == credentials["email"]))
