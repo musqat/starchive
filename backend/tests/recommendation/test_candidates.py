@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from app.domains.content.models import ContentType
 from app.domains.recommendation import candidates, profile
-from app.domains.user.models import User
+from app.domains.user.models import ContentStatus, User, UserContent
 
 MOVIE = "tmdb_157336"  # 인터스텔라
 BOOK = "aladin_9788937460586"  # 싯다르타
@@ -90,6 +90,23 @@ def test_candidates_restricted_to_only_ids(db_session):
     limited = candidates.generate(db_session, user.id, ContentType.MOVIE, only_ids=allowed)
 
     assert {c.content_id for c in limited} <= allowed
+
+
+@pytest.mark.db  # 책은 이웃 신호가 0 이라 내용 점수로만 줄을 선다. 가중치를 전역 0 에 두면 순서가 무작위가 된다
+def test_book_candidates_ranked_by_content(db_session, client, credentials):
+    client.post("/auth/signup", json=credentials)
+    user = db_session.scalar(select(User).where(User.email == credentials["email"]))
+    db_session.add(
+        UserContent(user_id=user.id, content_id=BOOK, rating=5.0, status=ContentStatus.DONE)
+    )
+    db_session.commit()
+
+    rows = candidates.generate(db_session, user.id, ContentType.BOOK, limit=10)
+
+    assert rows
+    assert all(c.taste_score == 0 for c in rows)  # 도서 평점 시드 없음 — 버그의 전제
+    assert all(c.score > 0 for c in rows)  # 내용 점수가 살아 있다
+    assert len({round(c.score, 6) for c in rows}) > 1  # 전부 같으면 순서는 무작위
 
 
 @pytest.mark.db  # 상위 하나만 뽑으면 모두가 같은 신작을 받는다. 상위 N 에서 무작위로 뽑는다
