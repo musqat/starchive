@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
+from app.core.ratelimit import limiter
 from app.domains.content.router import router as content_router
 from app.domains.content.search_router import router as search_router
 from app.domains.recommendation.router import router as recommendation_router
@@ -9,6 +12,8 @@ from app.domains.user.records_router import router as records_router
 from app.domains.user.router import router as auth_router
 
 app = FastAPI(title="starchive")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

@@ -7,6 +7,8 @@
 import pytest
 from sqlalchemy import select
 
+from app.core.config import settings
+from app.core.ratelimit import limiter
 from app.domains.content import search_router
 from app.domains.content.models import Content, ContentType
 from app.ingestion.db import Session
@@ -29,6 +31,44 @@ def no_comment(monkeypatch):
         return None
 
     monkeypatch.setattr(search_router, "_comment", none)
+
+
+@pytest.mark.db  # 공개 엔드포인트인데 호출마다 OpenAI 를 부른다. IP 당 분당 제한
+def test_search_rate_limited(client, monkeypatch, no_comment):
+    async def no_vector(query):
+        return None
+
+    monkeypatch.setattr(search_router, "_embed_query", no_vector)
+    monkeypatch.setattr(settings, "SEARCH_RATE_LIMIT", "3/minute")
+    limiter.reset()
+
+    codes = [
+        client.get("/search", params={"q": "zzz없는검색어xyz"}).status_code for _ in range(4)
+    ]
+
+    assert codes == [200, 200, 200, 429]
+
+
+@pytest.mark.db  # 로그인하면 계정으로 센다. 같은 IP 의 익명이 막혀도 로그인 사용자는 자기 버킷
+def test_search_limit_keyed_by_user_when_logged_in(client, credentials, monkeypatch, no_comment):
+    async def no_vector(query):
+        return None
+
+    monkeypatch.setattr(search_router, "_embed_query", no_vector)
+    monkeypatch.setattr(settings, "SEARCH_RATE_LIMIT", "2/minute")
+    limiter.reset()
+
+    params = {"q": "zzz없는검색어xyz"}
+    anon = [client.get("/search", params=params).status_code for _ in range(3)]
+    assert anon == [200, 200, 429]
+
+    client.post("/auth/signup", json=credentials)
+    client.post(
+        "/auth/login",
+        json={"email": credentials["email"], "password": credentials["password"]},
+    )
+
+    assert client.get("/search", params=params).status_code == 200
 
 
 @pytest.mark.db  # 벡터로 자기 자신을 검색하면 상위에 나온다

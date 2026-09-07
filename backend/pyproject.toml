@@ -16,6 +16,7 @@ dependencies = [
     "pydantic[email]>=2.13.4",
     # app/core/clients/* 가 재시도에 쓴다. 런타임 의존이라 etl 그룹에 두면 배포가 죽는다
     "tenacity",
+    "slowapi>=0.1.10",
 ]
 
 [dependency-groups]
