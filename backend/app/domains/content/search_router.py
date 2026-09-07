@@ -11,7 +11,7 @@
 import json
 
 import httpx
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,7 @@ from app.core.clients.openai import complete_json, embed
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.deps import get_current_user_optional
+from app.core.ratelimit import limiter
 from app.domains.content import search
 from app.domains.content.models import Content, ContentType
 from app.domains.content.router import attach_records
@@ -61,7 +62,9 @@ async def _comment(query: str, items: list[Content]) -> str | None:
 
 
 @router.get("/search", summary="검색 (하이브리드 + 코멘트)", response_model=SearchResult)
+@limiter.limit(lambda: settings.SEARCH_RATE_LIMIT)
 async def search_contents(
+    request: Request,
     q: str = Query(min_length=1),
     type: ContentType | None = None,
     user: User | None = Depends(get_current_user_optional),

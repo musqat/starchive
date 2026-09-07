@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     ### Front
     FRONTEND_ORIGIN: str = "http://localhost:3000"
     ### 외부 API
+    SEARCH_RATE_LIMIT: str = "20/minute"  # /search 는 공개인데 호출마다 OpenAI 를 부른다
     TMDB_API_KEY: str | None = None
     ALADIN_TTB_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
