@@ -4,13 +4,14 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import create_engine, select, text
 
 from app.core.config import settings
 from app.domains.content.models import Content, ContentType
 from app.domains.recommendation import pipeline, profile
 from app.domains.recommendation.models import ReasonSource, Recommendation
 from app.domains.user.models import ContentStatus, User, UserContent
+from tests.conftest import PASSWORD
 
 
 @pytest.fixture
@@ -173,3 +174,43 @@ def test_cron_ignores_users_without_batch(db_session, credentials, client):
     targets = pipeline.stale_users(db_session, datetime.now(UTC), settings.CRON_USER_LIMIT)
 
     assert user.id not in targets
+
+
+@pytest.mark.db  # 한 명이 실패해도 나머지는 갱신된다
+def test_cron_isolates_failure(client, db_session, movies, monkeypatch):
+    monkeypatch.setattr(settings, "CRON_SECRET", "cron-test-secret")
+    stale_minutes = (settings.CRON_STALE_HOURS + 1) * 60
+
+    emails, ids = [], []
+    for i in range(3):
+        email = f"cron-{uuid.uuid4().hex[:12]}@example.com"
+        client.post(
+            "/auth/signup",
+            json={"email": email, "password": PASSWORD, "nickname": f"크론{i}"},
+        )
+        user = db_session.scalar(select(User).where(User.email == email))
+        stored_batch(db_session, user.id, movies, minutes_ago=stale_minutes)
+        emails.append(email)
+        ids.append(user.id)
+
+    broken = ids[1]
+
+    async def fake_refresh(db, http, user_id):
+        if user_id == broken:
+            raise RuntimeError("LLM 실패")
+        return uuid.uuid4()
+
+    monkeypatch.setattr(pipeline, "refresh", fake_refresh)
+
+    try:
+        body = client.get(
+            "/recommendations/cron",
+            headers={"Authorization": "Bearer cron-test-secret"},
+        ).json()
+
+        assert broken in body["failed"]
+        assert body["done"] == body["targets"] - len(body["failed"])
+        assert body["done"] >= 2  # 실패한 한 명 말고는 갱신된다
+    finally:
+        with create_engine(settings.DIRECT_URL).begin() as conn:
+            conn.execute(text("delete from users where email = any(:e)"), {"e": emails})
