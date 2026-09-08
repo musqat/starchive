@@ -1,9 +1,14 @@
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.db import get_db
 from app.core.ratelimit import limiter
 from app.domains.content.router import router as content_router
 from app.domains.content.search_router import router as search_router
@@ -48,5 +53,10 @@ app.include_router(recommendation_router)
 
 
 @app.get("/health")
-def health():
+def health(db: Session = Depends(get_db)):
+    """DB 까지 확인한다. 전송량 초과 때 앱은 살아 있고 DB 만 죽어 이 응답으로는 몰랐다"""
+    try:
+        db.execute(text("select 1"))
+    except SQLAlchemyError:
+        return JSONResponse({"status": "db unreachable"}, status_code=503)
     return {"status": "ok"}
