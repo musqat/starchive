@@ -171,6 +171,23 @@ Vercel 프로젝트 2개. 같은 저장소에 Root Directory 만 다르게 잡�
 
 `backend/api/index.py` 가 Vercel 진입점
 
+**마이그레이션** — Vercel 은 alembic 을 돌리지 않는다. 로컬에서 `DIRECT_URL` 로 프로덕션 DB 에
+직접 올린다.
+
+```bash
+cd backend
+uv run alembic revision --autogenerate -m "add_xxx"    # 생성된 파일을 읽고 손본다
+uv run alembic upgrade head                             # 로컬 DB 에 먼저
+uv run pytest -q
+DIRECT_URL=<Supabase 5432> uv run alembic upgrade head  # 프로덕션. PR 머지 전에
+DIRECT_URL=<Supabase 5432> uv run alembic current      # head 인지 확인
+```
+
+순서는 스키마 먼저, 코드 나중. 머지하면 Vercel 이 바로 배포하는데 그 시점에 컬럼이 없으면 500 이다.
+스키마가 먼저 가면 옛 코드는 새 컬럼을 모른 채 그대로 돈다. 그래서 변경은 옛 코드가 견디는
+형태로 낸다. nullable 컬럼, 기본값 있는 컬럼, 인덱스, enum 값 추가. 이름 바꾸기와 컬럼 삭제는
+새 컬럼 추가 → 코드 전환 → 옛 컬럼 삭제로 PR 을 셋으로 나눈다.
+
 **Cron** — `backend/vercel.json` 이 하루 한 번 `GET /recommendations/cron` 을 부른다.
 
 **전송량** — Supabase 무료 한도는 저장 0.5 GB, 전송 5 GB. 저장만 보고 있다가 전송량을 넘겨

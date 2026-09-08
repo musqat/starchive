@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.ratelimit import limiter
-from app.domains.content import search_router
+from app.domains.content import search, search_router
 from app.domains.content.models import Content, ContentType
 from app.ingestion.db import Session
 
@@ -97,6 +97,24 @@ def test_search_exact_title_without_embedding(client, monkeypatch, no_comment):
     r = client.get("/search", params={"q": row.title, "type": "MOVIE"})
     assert r.status_code == 200
     assert row.id in [it["id"] for it in r.json()["items"]]
+
+
+@pytest.mark.db  # 정확 매칭이 있으면 검색어 대신 그 작품의 임베딩으로 이웃을 찾는다. OpenAI 없이
+def test_exact_match_uses_content_embedding_for_neighbors(client, monkeypatch, no_comment):
+    async def must_not_embed(query):
+        raise AssertionError("정확 매칭이 있는데 검색어를 임베딩했다")
+
+    monkeypatch.setattr(search_router, "_embed_query", must_not_embed)
+
+    row = _first_movie()
+    with Session() as db:
+        exact = search.by_exact(db, row.title, type_=ContentType.MOVIE)
+
+    r = client.get("/search", params={"q": row.title, "type": "MOVIE"})
+    assert r.status_code == 200
+    ids = [it["id"] for it in r.json()["items"]]
+    assert ids[: len(exact)] == exact  # 정확 매칭이 앞
+    assert len(ids) > len(exact)  # 뒤에 작품 임베딩으로 찾은 이웃
 
 
 @pytest.mark.db  # 정확 매칭도 벡터도 없으면 빈 결과

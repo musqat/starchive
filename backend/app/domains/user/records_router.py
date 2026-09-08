@@ -37,7 +37,7 @@ def list_library(
     stmt = stmt.order_by(UserContent.updated_at.desc()).offset((page - 1) * size).limit(size)
 
     records = db.scalars(stmt).unique().all()
-    # 카드가 체크 상태를 그리려면 content 안에도 같은 값이 있어야 한다
+    # 카드는 content 안의 값으로 체크 상태를 그린다. 같은 값을 넣어 준다
     for record in records:
         record.content.my_status = record.status
         record.content.my_rating = record.rating
@@ -71,10 +71,10 @@ def upsert_record(
         record.recommended = payload.recommended
     if payload.memo_public is not None:
         record.memo_public = payload.memo_public
-    # 메모도 빈 값을 보내 지울 수 있어야 한다
+    # 메모는 빈 값을 보내 지운다
     if "memo" in payload.model_fields_set:
         record.memo = payload.memo or None
-    # rating 은 null 을 보내 지울 수 있어야 하므로 전송 여부로 판단한다
+    # rating 은 null 을 보내 지운다. 값이 아니라 보냈는지로 본다
     if "rating" in payload.model_fields_set:
         record.rating = payload.rating
     if record.rating or record.liked or record.recommended or record.memo:
