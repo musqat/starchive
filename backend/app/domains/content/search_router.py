@@ -79,8 +79,12 @@ async def search_contents(
     ordered = list(exact)
     seen = set(ordered)
 
-    # 의미 검색 — 분위기·내용. 정확 매칭에 없는 것만 뒤에 붙인다
-    vector = await _embed_query(query)
+    # 의미 검색 — 분위기·내용. 정확 매칭에 없는 것만 뒤에 붙인다.
+    # 정확 매칭이 있으면 1위 작품의 임베딩으로 찾는다. 제목을 임베딩하면 글자 닮은 게 나온다
+    if exact:
+        vector = db.scalar(select(Content.embedding).where(Content.id == exact[0]))
+    else:
+        vector = await _embed_query(query)
     if vector is not None:
         for cid, _ in search.by_query(db, vector, type_=type):
             if cid not in seen:
@@ -94,7 +98,7 @@ async def search_contents(
     rows = db.scalars(select(Content).where(Content.id.in_(rank))).unique().all()
     items = sorted(rows, key=lambda c: rank[c.id])  # 정확 매칭 → 의미 순
 
-    # 코멘트는 자연어 질의일 때만. 제목·이름으로 찾으면(정확 매칭) 어색하다
+    # 코멘트는 자연어 질의일 때만. 제목·이름으로 찾은 결과에 분위기 요약은 안 맞는다
     comment = None if exact else await _comment(query, items)
 
     attach_records(db, user, items)
