@@ -207,3 +207,8 @@ DIRECT_URL=<Supabase 5432> uv run alembic current      # head 인지 확인
 지금은 `/health` 가 DB 에 쿼리 하나를 보내고, 안 받으면 5초 안에 503 을 낸다. 외부에서 5분마다
 프론트 홈을 호출하고, 정상 응답이 아니면 메일로 알린다. 홈은 서버에서 목록을 불러오므로
 백엔드나 DB 가 죽으면 같이 실패한다.
+
+**Supabase REST** — Supabase 는 public 스키마를 PostgREST(`/rest/v1`) 로도 연다. 앱은 안 쓰지만
+anon 키만 있으면 users 를 포함한 모든 테이블이 REST 로 읽히고 써진다. 마이그레이션
+`f2a9c4d17b03` 이 테이블마다 RLS 를 정책 없이 켠다. anon·authenticated 는 0행, 앱은 테이블
+소유자라 그대로다. 대시보드 Settings → API 의 Data API 도 끈다. 둘 다 있어야 키가 새도 막힌다.
