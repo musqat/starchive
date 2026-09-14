@@ -25,7 +25,7 @@ from app.domains.user.models import UserContent
 # 영화 — 내용 점수는 자기 힘으로 한 편도 못 올리고 이웃 점수가 뽑은 것의 순서만 흔든다.
 #        0.3 -> 0.0 으로 Recall 0.178 -> 0.190, NDCG 0.285 -> 0.332
 # 책   — 시드가 MovieLens 라 도서 평점이 0건이다. 이웃 점수가 전부 0이라 내용 점수만 돈다.
-#        측정된 적 없다
+#        정답이 없어 정확도는 못 잰다. 장르 취향 105명으로 커버리지·장르 분포만 쟀다
 WEIGHTS = {
     ContentType.MOVIE: (0.0, 1.0),
     ContentType.BOOK: (0.3, 0.7),
