@@ -7,7 +7,7 @@
 from fastapi import Request
 from slowapi import Limiter
 
-from app.core.deps import COOKIE_NAME
+from app.core.deps import token_from_request
 from app.core.security import decode_access_token
 
 
@@ -21,7 +21,7 @@ def client_ip(request: Request) -> str:
 
 def user_or_ip(request: Request) -> str:
     """유효한 토큰이 있으면 user:<id>, 없으면 ip:<addr>. DB 는 안 본다"""
-    token = request.cookies.get(COOKIE_NAME)
+    token = token_from_request(request)
     if token:
         decoded = decode_access_token(token)
         if decoded:

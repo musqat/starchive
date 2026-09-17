@@ -71,6 +71,30 @@ def test_search_limit_keyed_by_user_when_logged_in(client, credentials, monkeypa
     assert client.get("/search", params=params).status_code == 200
 
 
+@pytest.mark.db  # 앱은 헤더로 토큰을 보낸다. 쿠키가 없어도 계정으로 센다
+def test_search_limit_keyed_by_user_with_bearer(client, credentials, monkeypatch, no_comment):
+    async def no_vector(query):
+        return None
+
+    monkeypatch.setattr(search_router, "_embed_query", no_vector)
+    monkeypatch.setattr(settings, "SEARCH_RATE_LIMIT", "2/minute")
+    limiter.reset()
+
+    params = {"q": "zzz없는검색어xyz"}
+    anon = [client.get("/search", params=params).status_code for _ in range(3)]
+    assert anon == [200, 200, 429]
+
+    client.post("/auth/signup", json=credentials)
+    token = client.post(
+        "/auth/token",
+        json={"email": credentials["email"], "password": credentials["password"]},
+    ).json()["access_token"]
+    assert "access_token" not in client.cookies  # 쿠키가 아니라 헤더로 구분됐다는 보장
+
+    r = client.get("/search", params=params, headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+
+
 @pytest.mark.db  # 벡터로 자기 자신을 검색하면 상위에 나온다
 def test_search_semantic_ranks_self(client, monkeypatch, no_comment):
     row = _first_movie()
