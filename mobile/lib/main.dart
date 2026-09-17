@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'models/user.dart';
 import 'providers/auth_provider.dart';
-import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: StarchiveApp()));
@@ -18,41 +17,19 @@ class StarchiveApp extends ConsumerWidget {
 
     return MaterialApp(
       title: 'starchive',
-      theme: ThemeData(colorSchemeSeed: Colors.indigo),
+      // 웹과 같은 어두운 바탕(#0c0c0c). 밝은 테마는 두지 않는다
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        colorSchemeSeed: Colors.indigo,
+        scaffoldBackgroundColor: const Color(0xFF0C0C0C),
+        appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF0C0C0C)),
+      ),
       home: auth.when(
         loading: () =>
             const Scaffold(body: Center(child: CircularProgressIndicator())),
-        // 시작 확인이 실패해도 로그인은 할 수 있게 한다
-        error: (_, _) => const LoginScreen(),
-        data: (user) =>
-            user == null ? const LoginScreen() : SignedInScreen(user: user),
-      ),
-    );
-  }
-}
-
-/// 3단계에서 홈 화면으로 바뀐다
-class SignedInScreen extends ConsumerWidget {
-  const SignedInScreen({super.key, required this.user});
-
-  final User user;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('starchive')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${user.nickname} 님'),
-            const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: () => ref.read(authProvider.notifier).logout(),
-              child: const Text('로그아웃'),
-            ),
-          ],
-        ),
+        // 시작 확인이 실패해도 목록은 볼 수 있다
+        error: (_, _) => const HomeScreen(user: null),
+        data: (user) => HomeScreen(user: user),
       ),
     );
   }

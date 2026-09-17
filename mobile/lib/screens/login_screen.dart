@@ -40,6 +40,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (!mounted) return;
+    // 성공하면 홈으로 돌아간다. 홈이 로그인 상태를 보고 다시 그린다
+    if (error == null) {
+      Navigator.of(context).pop();
+      return;
+    }
     setState(() {
       _submitting = false;
       _error = error;
