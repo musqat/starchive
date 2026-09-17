@@ -25,6 +25,7 @@ LOGIN_ERRORS = {
     429: {"description": "실패가 쌓여 잠김"},
 }
 
+
 def set_auth_cookie(response: Response, user: User) -> None:
     """프론트가 /api 로 프록시해 같은 출처가 되므로 lax"""
     response.set_cookie(
@@ -54,6 +55,7 @@ def sign_up(payload: SignUpIn, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     return user
+
 
 def _authenticate(payload: LoginIn, db: Session) -> User:
     """이메일·비밀번호 검사. 실패하면 401 이나 429 를 던진다"""
@@ -144,12 +146,17 @@ def withdraw(
     db.commit()
     response.delete_cookie(COOKIE_NAME)
 
-@router.post("/token", response_model=TokenOut)
+
+@router.post(
+    "/token",
+    response_model=TokenOut,
+    responses=LOGIN_ERRORS,
+)
 def issue_token(payload: LoginIn, db: Session = Depends(get_db)):
     user = _authenticate(payload, db)
 
-    #토큰 생성
-    token  = create_access_token(user_id=user.id, token_version= user.token_version)
+    # 토큰 생성
+    token = create_access_token(user_id=user.id, token_version=user.token_version)
 
-    #TokenOut 에 담아 돌려준다
+    # TokenOut 에 담아 돌려준다
     return TokenOut(access_token=token, user=UserOut.model_validate(user))
