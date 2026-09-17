@@ -173,9 +173,10 @@ def test_bearer_tampered_token(client, credentials):
 
     user_id = client.post("/auth/signup", json=credentials).json()["id"]
     token = create_access_token(user_id)
-    last = "B" if token[-1] == "A" else "A"
-    tampered = token[:-1] + last
-
+    header, payload, signature = token.split(".")
+    first = "B" if signature[0] == "A" else "A"
+    tampered = f"{header}.{payload}.{first}{signature[1:]}"
+    
     assert "access_token" not in client.cookies
     r = client.get("/auth/me", headers=_bearer(tampered))
 
