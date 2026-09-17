@@ -11,3 +11,8 @@
 - [ ] `npm run lint`
 - [ ] `npm run e2e` 
 - [ ] Vercel 프리뷰 Ready
+
+**mobile/**
+
+- [ ] `flutter analyze`
+- [ ] `flutter test`

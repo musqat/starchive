@@ -62,3 +62,26 @@ jobs:
       - run: npm run typecheck
 
       - run: npm run lint
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          cache: true
+
+      - run: flutter pub get
+
+      - name: 린트
+        run: flutter analyze
+
+      # APK 빌드는 안 돌린다. Android SDK 를 받는 데 몇 분이 걸리고,
+      # 지금 잡히는 것은 analyze 가 이미 잡는다
+      - name: 테스트
+        run: flutter test
