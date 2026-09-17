@@ -13,12 +13,17 @@ from app.domains.user.schemas import (
     LoginIn,
     PasswordChangeIn,
     SignUpIn,
+    TokenOut,
     UserOut,
     WithdrawIn,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+LOGIN_ERRORS = {
+    401: {"description": "이메일이나 비밀번호가 틀림"},
+    429: {"description": "실패가 쌓여 잠김"},
+}
 
 def set_auth_cookie(response: Response, user: User) -> None:
     """프론트가 /api 로 프록시해 같은 출처가 되므로 lax"""
@@ -50,14 +55,8 @@ def sign_up(payload: SignUpIn, db: Session = Depends(get_db)):
     db.refresh(user)
     return user
 
-
-@router.post(
-    "/login",
-    response_model=UserOut,
-    responses={429: {"description": "실패가 쌓여 잠김"}},
-)
-def log_in(payload: LoginIn, response: Response, db: Session = Depends(get_db)):
-    """성공 시 httpOnly 쿠키에 토큰. 실패는 이메일·비밀번호 구분 없이 401"""
+def _authenticate(payload: LoginIn, db: Session) -> User:
+    """이메일·비밀번호 검사. 실패하면 401 이나 429 를 던진다"""
     # 시드 유저는 조회 단계에서 막는다
     user = db.scalar(select(User).where(User.email == payload.email, User.is_seed.is_(False)))
     if not user:
@@ -83,6 +82,18 @@ def log_in(payload: LoginIn, response: Response, db: Session = Depends(get_db)):
     user.failed_logins = 0
     user.locked_until = None
     db.commit()
+
+    return user
+
+
+@router.post(
+    "/login",
+    response_model=UserOut,
+    response_description="로그인 성공. 토큰은 httpOnly 쿠키로 설정",
+    responses=LOGIN_ERRORS,
+)
+def log_in(payload: LoginIn, response: Response, db: Session = Depends(get_db)):
+    user = _authenticate(payload, db)
 
     set_auth_cookie(response, user)
     return user
@@ -132,3 +143,13 @@ def withdraw(
     db.delete(user)
     db.commit()
     response.delete_cookie(COOKIE_NAME)
+
+@router.post("/token", response_model=TokenOut)
+def issue_token(payload: LoginIn, db: Session = Depends(get_db)):
+    user = _authenticate(payload, db)
+
+    #토큰 생성
+    token  = create_access_token(user_id=user.id, token_version= user.token_version)
+
+    #TokenOut 에 담아 돌려준다
+    return TokenOut(access_token=token, user=UserOut.model_validate(user))

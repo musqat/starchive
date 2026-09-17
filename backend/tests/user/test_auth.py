@@ -222,3 +222,65 @@ def test_password_change_invalidates_bearer_token(client, credentials):
     r = client.get("/auth/me", headers=_bearer(token))
     assert r.status_code == 401
     assert r.json() == {"detail": "not authorized"}
+
+
+# ---- POST /auth/token (앱 로그인) ----
+
+
+def _login_body(credentials: dict) -> dict[str, str]:
+    return {"email": credentials["email"], "password": credentials["password"]}
+
+
+@pytest.mark.db  # 성공하면 토큰을 본문으로 주고 쿠키는 안 만든다
+def test_token_returns_body_without_cookie(client, credentials):
+    client.post("/auth/signup", json=credentials)
+
+    r = client.post("/auth/token", json=_login_body(credentials))
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["access_token"]  # 빈 문자열이 아니다
+    assert body["token_type"] == "bearer"
+    assert body["user"]["email"] == credentials["email"]
+    assert "access_token" not in client.cookies  # 앱용이라 쿠키는 안 쓴다
+
+
+@pytest.mark.db  # 받은 토큰으로 헤더 로그인이 된다
+def test_token_works_as_bearer(client, credentials):
+    client.post("/auth/signup", json=credentials)
+
+    token = client.post("/auth/token", json=_login_body(credentials)).json()["access_token"]
+    r = client.get("/auth/me", headers=_bearer(token))
+
+    assert r.status_code == 200
+
+
+@pytest.mark.db  # 틀린 비밀번호 → 401
+def test_token_wrong_password(client, credentials):
+    client.post("/auth/signup", json=credentials)
+
+    token = client.post("/auth/token", json=_login_body(credentials)).json()["access_token"]
+    r = client.get("/auth/me", headers=_bearer(token))
+
+    client.post("/auth/signup", json=credentials)
+    r = client.post("/auth/token", json={**_login_body(credentials), "password": "wrongwrong"})
+    assert r.status_code == 401
+
+
+@pytest.mark.db  # 실패가 쌓이면 /auth/token 도 잠긴다
+def test_token_lockout(client, credentials):
+    from app.core.config import settings
+
+    client.post("/auth/signup", json=credentials)
+    wrong = {"email": credentials["email"], "password": "wrongwrong"}
+
+    for _ in range(settings.MAX_FAILED_LOGINS):
+        assert client.post("/auth/token", json=wrong).status_code == 401
+
+    r = client.post("/auth/token", json=wrong)
+    assert r.status_code == 429
+    assert int(r.headers["Retry-After"]) > 0
+
+    # 잠금은 비밀번호가 맞아도 풀리지 않는다
+    correct = {"email": credentials["email"], "password": credentials["password"]}
+    assert client.post("/auth/token", json=correct).status_code == 429
