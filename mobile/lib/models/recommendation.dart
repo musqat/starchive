@@ -35,8 +35,8 @@ class RecommendationList {
   factory RecommendationList.fromJson(Map<String, dynamic> json) {
     return RecommendationList(
       items: (json['items'] as List)
-      .map((e) => Recommendation.fromJson(e as Map<String, dynamic>))
-      .toList(),
+          .map((e) => Recommendation.fromJson(e as Map<String, dynamic>))
+          .toList(),
       ratedCount: json['rated_count'] as int,
       requiredCount: json['required_count'] as int,
       requiredRating: (json['required_rating'] as num).toDouble(),
