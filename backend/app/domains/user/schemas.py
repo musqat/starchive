@@ -64,6 +64,12 @@ class UserOut(BaseModel):
     created_at: datetime
 
 
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
+
+
 class RecordIn(BaseModel):
     """보낸 필드만 바꿈"""
 
@@ -92,3 +98,4 @@ class LibraryItem(RecordOut):
     """내 서재 — 콘텐츠 정보를 추가"""
 
     content: ContentSummary
+
