@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/content_detail.dart';
+import '../providers/auth_provider.dart';
 import '../providers/detail_provider.dart';
+import '../providers/memo_provider.dart';
+import '../widgets/memo_editor.dart';
+import '../widgets/record_panel.dart';
 
 /// TMDB 로고는 경로 조각만 온다. 앞에 이 주소를 붙인다
 const _tmdbLogoBase = 'https://image.tmdb.org/t/p/w92';
@@ -27,13 +31,14 @@ class DetailScreen extends ConsumerWidget {
   }
 }
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   const _Body({required this.item});
 
   final ContentDetail item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final signedIn = ref.watch(authProvider).value != null;
     final muted = Theme.of(context).textTheme.bodySmall;
 
     return ListView(
@@ -65,6 +70,15 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 16),
           Text(item.description!, style: const TextStyle(height: 1.7)),
         ],
+        const Divider(height: 40),
+        if (signedIn) ...[
+          RecordPanel(item: item),
+          const SizedBox(height: 16),
+          MemoSection(item: item),
+        ] else
+          const Text('로그인하면 기록할 수 있어요'),
+        const Divider(height: 40),
+        _Memos(item: item),
       ],
     );
   }
@@ -130,6 +144,68 @@ class _ProviderLogo extends StatelessWidget {
         width: 40,
         height: 40,
         errorBuilder: (context, _, _) => Chip(label: Text(name)),
+      ),
+    );
+  }
+}
+
+/// 남들이 공개로 켠 메모
+class _Memos extends ConsumerWidget {
+  const _Memos({required this.item});
+
+  final ContentDetail item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 백엔드가 목록에서 내 메모를 뺀다. 내 메모는 위 MemoSection 이 보여 준다
+    final memos = ref.watch(publicMemosProvider(item.id));
+
+    return memos.when(
+      loading: () => const SizedBox.shrink(),
+      error: (e, _) => const SizedBox.shrink(),
+      data: (list) {
+        if (list.isEmpty) {
+          return const Text('다른 사람의 메모가 아직 없어요');
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('다른 사람의 메모', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            for (final memo in list)
+              _MemoTile(
+                who: memo.nickname,
+                memo: memo.memo,
+                rating: memo.rating,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MemoTile extends StatelessWidget {
+  const _MemoTile({required this.who, required this.memo, this.rating});
+
+  final String who;
+  final String memo;
+  final double? rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final head = rating == null
+        ? who
+        : '$who · ★ ${rating!.toStringAsFixed(1)}';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(head, style: Theme.of(context).textTheme.bodySmall),
+          Text(memo),
+        ],
       ),
     );
   }

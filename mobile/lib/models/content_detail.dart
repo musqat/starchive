@@ -14,6 +14,10 @@ class ContentDetail {
     this.externalPopularity,
     this.myMemo,
     this.myMemoPublic = false,
+    this.myStatus,
+    this.myRating,
+    this.myLiked = false,
+    this.myRecommended = false,
   });
 
   final String id;
@@ -31,9 +35,15 @@ class ContentDetail {
   final double? externalRating;
   final int? externalPopularity;
 
-  /// 로그인했을 때만 채워진다
+  /// 로그인했을 때만 채워진다. 기록 화면의 처음 값이 된다
   final String? myMemo;
   final bool myMemoPublic;
+
+  /// WISH / DOING / DONE
+  final String? myStatus;
+  final double? myRating;
+  final bool myLiked;
+  final bool myRecommended;
 
   /// 영화 러닝타임(분). 책이면 null
   int? get runtime => metadata['runtime'] as int?;
@@ -53,6 +63,10 @@ class ContentDetail {
       externalPopularity: json['external_popularity'] as int?,
       myMemo: json['my_memo'] as String?,
       myMemoPublic: json['my_memo_public'] as bool? ?? false,
+      myStatus: json['my_status'] as String?,
+      myRating: (json['my_rating'] as num?)?.toDouble(),
+      myLiked: json['my_liked'] as bool? ?? false,
+      myRecommended: json['my_recommended'] as bool? ?? false,
     );
   }
 }
