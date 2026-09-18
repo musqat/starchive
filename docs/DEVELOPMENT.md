@@ -38,6 +38,19 @@ npm run dev
 
 `http://localhost:3000`
 
+**앱**
+
+Flutter 3.44.6 과 안드로이드 SDK 가 필요하다.
+
+```bash
+cd mobile
+flutter pub get
+flutter run
+```
+
+에뮬레이터는 PC 의 백엔드를 `10.0.2.2` 로 본다. 기본값이 그 주소라 따로 줄 것이 없다.
+배포된 백엔드를 보려면 `--dart-define=API_BASE_URL=https://starchive-psi.vercel.app` 를 붙인다.
+
 <br>
 
 ## 환경변수

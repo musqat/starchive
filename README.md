@@ -5,7 +5,7 @@
 
 [![CI](https://github.com/musqat/starchive/actions/workflows/ci.yml/badge.svg)](https://github.com/musqat/starchive/actions/workflows/ci.yml)
 
-**[starchive-front.vercel.app](https://starchive-front.vercel.app)**
+**[starchive-front.vercel.app](https://starchive-front.vercel.app)** · [Android APK](https://github.com/musqat/starchive/releases/latest)
 
 ![홈 — 취향 추천과 인기 목록](docs/홈화면.png)
 
@@ -170,12 +170,17 @@ starchive/
 │   │   ├── domains/       도메인별 모델·스키마·라우터
 │   │   └── ingestion/     수집 정규화
 │   └── scripts/           수집 실행 스크립트
-└── web/        Next.js 16 · Tailwind 4
-    ├── e2e/           Playwright
-    └── src/
-        ├── app/           라우트
-        ├── components/    UI
-        └── lib/           타입, API 클라이언트
+├── web/        Next.js 16 · Tailwind 4
+│   ├── e2e/           Playwright
+│   └── src/
+│       ├── app/           라우트
+│       ├── components/    UI
+│       └── lib/           타입, API 클라이언트
+└── mobile/     Flutter 3.44 · Riverpod
+    └── lib/
+        ├── models/        응답 파싱
+        ├── providers/     상태와 호출
+        └── screens/       화면
 ```
 
 **DB** — Supabase(Postgres + pgvector). 개발은 `backend/docker-compose.yml` 의 로컬 컨테이너로 한다
