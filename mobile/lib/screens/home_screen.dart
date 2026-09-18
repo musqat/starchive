@@ -7,6 +7,7 @@ import '../models/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/content_provider.dart';
 import '../widgets/content_row.dart';
+import 'account_screen.dart';
 import 'login_screen.dart';
 import 'browse_screen.dart';
 import 'library_screen.dart';
@@ -38,6 +39,14 @@ class HomeScreen extends ConsumerWidget {
               ).push(MaterialPageRoute(builder: (_) => const LibraryScreen())),
               icon: const Icon(Icons.bookmark_border),
               tooltip: '보관함',
+            ),
+          if (user != null)
+            IconButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => AccountScreen(user: user!)),
+              ),
+              icon: const Icon(Icons.person_outline),
+              tooltip: '계정',
             ),
           if (user == null)
             TextButton(

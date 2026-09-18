@@ -3,18 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
 import '../providers/auth_provider.dart';
-import 'signup_screen.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends ConsumerStatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _nickname = TextEditingController();
   bool _submitting = false;
   String? _error;
 
@@ -22,6 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _nickname.dispose();
     super.dispose();
   }
 
@@ -33,15 +34,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     String? error;
     try {
-      await ref.read(authProvider.notifier).login(_email.text, _password.text);
+      await ref
+          .read(authProvider.notifier)
+          .signUp(_email.text, _password.text, _nickname.text);
     } on ApiException catch (e) {
-      error = e.statusCode == 429 ? e.message : '이메일이나 비밀번호가 틀렸어요';
+      error = switch (e.statusCode) {
+        409 => '이미 쓰는 이메일이에요',
+        422 => '입력한 값을 다시 확인해 주세요',
+        _ => e.message,
+      };
     } catch (_) {
       error = '서버에 연결하지 못했어요';
     }
 
     if (!mounted) return;
-    // 성공하면 홈으로 돌아간다. 홈이 로그인 상태를 보고 다시 그린다
+    // 가입과 로그인이 함께 끝난다. 로그인 화면까지 걷어내고 홈으로
     if (error == null) {
       Navigator.of(context).pop();
       return;
@@ -55,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('로그인')),
+      appBar: AppBar(title: const Text('가입')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -70,8 +77,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _password,
-              decoration: const InputDecoration(labelText: '비밀번호'),
+              decoration: const InputDecoration(
+                labelText: '비밀번호',
+                helperText: '8자 이상',
+              ),
               obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _nickname,
+              decoration: const InputDecoration(labelText: '닉네임'),
             ),
             const SizedBox(height: 16),
             if (_error != null)
@@ -82,13 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _submitting ? null : _submit,
-              child: Text(_submitting ? '로그인 중' : '로그인'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const SignUpScreen())),
-              child: const Text('계정이 없나요? 가입'),
+              child: Text(_submitting ? '가입 중' : '가입'),
             ),
           ],
         ),
