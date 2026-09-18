@@ -78,11 +78,14 @@ class _MemoSectionState extends ConsumerState<MemoSection> {
       children: [
         TextField(
           controller: _memo,
-          maxLines: 3,
+          minLines: 1,
+          maxLines: 5,
           maxLength: 500,
           decoration: const InputDecoration(
             labelText: '메모',
             hintText: '감상을 적어 두면 나중에 찾기 쉬워요',
+            border: OutlineInputBorder(),
+            counterText: '',
           ),
         ),
         Row(
