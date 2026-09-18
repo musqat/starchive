@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import '../providers/content_provider.dart';
 import '../widgets/content_row.dart';
 import 'login_screen.dart';
+import 'search_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key, required this.user});
@@ -21,11 +22,18 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(user == null ? 'starchive' : '${user!.nickname} 님'),
         actions: [
+          IconButton(
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SearchScreen())),
+            icon: const Icon(Icons.search),
+            tooltip: '검색',
+          ),
           if (user == null)
             TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
               child: const Text('로그인'),
             )
           else

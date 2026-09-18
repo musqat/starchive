@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/content.dart';
+import '../screens/detail_screen.dart';
 
 /// 제목 한 줄 + 가로로 넘기는 카드 목록
 class ContentRow extends StatelessWidget {
@@ -56,39 +57,44 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 110,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: item.imageUrl == null
-                ? Container(
-                    height: 160,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                  )
-                : Image.network(
-                    item.imageUrl!,
-                    height: 160,
-                    width: 110,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, _, _) => Container(
+      child: InkWell(
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => DetailScreen(id: item.id))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: item.imageUrl == null
+                  ? Container(
                       height: 160,
                       color: Theme.of(
                         context,
                       ).colorScheme.surfaceContainerHighest,
+                    )
+                  : Image.network(
+                      item.imageUrl!,
+                      height: 160,
+                      width: 110,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, _, _) => Container(
+                        height: 160,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                      ),
                     ),
-                  ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            item.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              item.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }

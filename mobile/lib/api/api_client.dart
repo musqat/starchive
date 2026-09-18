@@ -43,26 +43,56 @@ class ApiClient {
   Future<void> deleteToken() => _storage.delete(key: _tokenKey);
 
   Future<Map<String, dynamic>> get(String path) async {
-    final headers = await _headers();
     final response = await _client
-        .get(Uri.parse('$baseUrl$path'), headers: headers)
+        .get(Uri.parse('$baseUrl$path'), headers: await _headers())
         .timeout(_timeout);
-    return _decode(response);
+    return _parse(response) as Map<String, dynamic>;
+  }
+
+  /// 응답이 목록인 API. /contents/{id}/memos 같은 것
+  Future<List<dynamic>> getList(String path) async {
+    final response = await _client
+        .get(Uri.parse('$baseUrl$path'), headers: await _headers())
+        .timeout(_timeout);
+    return _parse(response) as List<dynamic>;
   }
 
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> body,
   ) async {
-    final headers = {...await _headers(), 'Content-type': 'application/json'};
     final response = await _client
         .post(
           Uri.parse('$baseUrl$path'),
-          headers: headers,
+          headers: await _jsonHeaders(),
           body: jsonEncode(body),
         )
         .timeout(_timeout);
-    return _decode(response);
+    return _parse(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> put(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await _client
+        .put(
+          Uri.parse('$baseUrl$path'),
+          headers: await _jsonHeaders(),
+          body: jsonEncode(body),
+        )
+        .timeout(_timeout);
+    return _parse(response) as Map<String, dynamic>;
+  }
+
+  /// 성공은 204 라 돌려줄 본문이 없다
+  Future<void> delete(String path) async {
+    final response = await _client
+        .delete(Uri.parse('$baseUrl$path'), headers: await _headers())
+        .timeout(_timeout);
+    if (response.statusCode >= 300) {
+      _parse(response); // 예외를 던진다
+    }
   }
 
   Future<Map<String, String>> _headers() async {
@@ -71,17 +101,26 @@ class ApiClient {
     return {'Authorization': 'Bearer $token'};
   }
 
-  Map<String, dynamic> _decode(http.Response response) {
+  Future<Map<String, String>> _jsonHeaders() async => {
+    ...await _headers(),
+    'Content-Type': 'application/json',
+  };
+
+  /// 본문을 읽고 2xx 가 아니면 예외. 맵이거나 목록이다
+  dynamic _parse(http.Response response) {
+    // response.body 로 읽으면 한글이 깨진다. 백엔드 JSON 에 charset 표시가 없다
     final text = utf8.decode(response.bodyBytes);
-    final body = jsonDecode(text) as Map<String, dynamic>;
+    final body = jsonDecode(text);
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return body;
-    } else {
-      final detail = body['detail'];
-      throw ApiException(
-        response.statusCode,
-        detail is String ? detail : '요청을 처리하지 못했어요',
-      );
     }
+
+    // 422 는 detail 이 목록이라 문자열일 때만 쓴다
+    final detail = body is Map ? body['detail'] : null;
+    throw ApiException(
+      response.statusCode,
+      detail is String ? detail : '요청을 처리하지 못했어요',
+    );
   }
 }
