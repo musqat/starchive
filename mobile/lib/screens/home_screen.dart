@@ -7,6 +7,7 @@ import '../models/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/content_provider.dart';
 import '../widgets/content_row.dart';
+import '../widgets/refresh_recommendations.dart';
 import 'account_screen.dart';
 import 'login_screen.dart';
 import 'browse_screen.dart';
@@ -72,6 +73,7 @@ class HomeScreen extends ConsumerWidget {
           children: [
             // 추천은 로그인한 사람에게만 나간다
             if (user != null) ...[
+              const _RefreshHeader(),
               const _RecommendationRow(title: '당신을 위한 영화', type: 'MOVIE'),
               const _RecommendationRow(title: '당신을 위한 책', type: 'BOOK'),
             ],
@@ -106,6 +108,20 @@ class _PopularRow extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 매체 둘이 함께 바뀐다. 영화 쪽 값으로 한 번만 그린다
+class _RefreshHeader extends ConsumerWidget {
+  const _RefreshHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final movie = ref.watch(recommendationsProvider('MOVIE'));
+    return movie.maybeWhen(
+      data: (list) => RefreshRecommendations(list: list),
+      orElse: () => const SizedBox.shrink(),
     );
   }
 }
