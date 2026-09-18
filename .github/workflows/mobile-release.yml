@@ -1,0 +1,43 @@
+name: APK 릴리스
+
+# mobile-v1.0.0 처럼 태그를 밀면 돈다. 손으로도 돌릴 수 있다
+on:
+  push:
+    tags:
+      - "mobile-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          cache: true
+
+      - run: flutter pub get
+
+      # 기본값은 에뮬레이터용 10.0.2.2 라 배포본에는 못 쓴다
+      - name: APK 빌드
+        run: flutter build apk --release --dart-define=API_BASE_URL=https://starchive-psi.vercel.app
+
+      # 태그로 돌아온 것만 올린다. 손으로 돌린 것은 빌드만 확인한다
+      - name: 릴리스에 올리기
+        if: startsWith(github.ref, 'refs/tags/')
+        run: gh release create "$GITHUB_REF_NAME" build/app/outputs/flutter-apk/app-release.apk --title "$GITHUB_REF_NAME" --notes "안드로이드 설치 파일. 디버그 키로 서명해서 처음 열 때 출처 확인이 뜬다"
+        env:
+          GH_TOKEN: ${{ github.token }}

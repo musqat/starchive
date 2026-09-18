@@ -85,6 +85,36 @@ class ApiClient {
     return _parse(response) as Map<String, dynamic>;
   }
 
+  /// 비밀번호 변경처럼 성공이 204 인 API
+  Future<void> patch(String path, Map<String, dynamic> body) async {
+    final response = await _client
+        .patch(
+          Uri.parse('$baseUrl$path'),
+          headers: await _jsonHeaders(),
+          body: jsonEncode(body),
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode >= 300) {
+      _parse(response);
+    }
+  }
+
+  /// 탈퇴처럼 본문은 보내지만 성공이 204 인 API
+  Future<void> postNoContent(String path, Map<String, dynamic> body) async {
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl$path'),
+          headers: await _jsonHeaders(),
+          body: jsonEncode(body),
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode >= 300) {
+      _parse(response);
+    }
+  }
+
   /// 성공은 204 라 돌려줄 본문이 없다
   Future<void> delete(String path) async {
     final response = await _client
