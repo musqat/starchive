@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_client.dart';
 import '../models/content.dart';
 import '../providers/search_provider.dart';
+import 'detail_screen.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -117,8 +118,9 @@ class _ResultTile extends StatelessWidget {
       ),
       title: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: Text(item.creator ?? (item.type == 'MOVIE' ? '영화' : '책')),
-      // 2단계에서 상세 화면으로 연결한다
-      onTap: null,
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => DetailScreen(id: item.id))),
     );
   }
 }
