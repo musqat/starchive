@@ -106,6 +106,12 @@ class _Card extends StatelessWidget {
                         bottom: 4,
                         child: RatingBadge(rating: item.externalRating!),
                       ),
+                    if (item.myRating != null)
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: RatingBadge(rating: item.myRating!, mine: true),
+                      ),
                   ],
                 ),
               ),

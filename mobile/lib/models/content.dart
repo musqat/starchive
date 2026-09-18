@@ -6,6 +6,7 @@ class Content {
     this.creator,
     this.imageUrl,
     this.externalRating,
+    this.myRating,
   });
 
   final String id;
@@ -17,6 +18,9 @@ class Content {
   /// TMDB·알라딘 평점. 없는 작품도 있다
   final double? externalRating;
 
+  /// 내가 준 별점. 로그인했을 때만 채워진다
+  final double? myRating;
+
   factory Content.fromJson(Map<String, dynamic> json) {
     return Content(
       id: json['id'] as String,
@@ -25,6 +29,7 @@ class Content {
       creator: json['creator'] as String?,
       imageUrl: json['image_url'] as String?,
       externalRating: (json['external_rating'] as num?)?.toDouble(),
+      myRating: (json['my_rating'] as num?)?.toDouble(),
     );
   }
 }

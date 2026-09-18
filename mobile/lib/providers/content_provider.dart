@@ -9,6 +9,8 @@ final popularProvider = FutureProvider.family<List<Content>, String>((
   ref,
   type,
 ) async {
+  // 로그인하면 내 별점이 함께 온다.
+  ref.watch(authProvider);
   final api = ref.read(apiClientProvider);
   final body = await api.get('/contents?type=$type&size=10');
   return (body['items'] as List)
