@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_provider.dart';
 import 'content_provider.dart';
 import 'detail_provider.dart';
+import 'library_provider.dart';
 import 'memo_provider.dart';
 
 final recordControllerProvider = Provider<RecordController>(
@@ -32,5 +33,6 @@ class RecordController {
     ref.invalidate(publicMemosProvider(contentId));
     ref.invalidate(popularProvider);
     ref.invalidate(recommendationsProvider);
+    ref.invalidate(libraryProvider);
   }
 }

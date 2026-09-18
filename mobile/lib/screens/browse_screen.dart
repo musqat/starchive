@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/content.dart';
 import '../providers/auth_provider.dart';
 import '../providers/browse_provider.dart';
-import '../widgets/rating_badge.dart';
-import 'detail_screen.dart';
+import '../widgets/content_grid.dart';
 
 const _sorts = {'popular': '인기순', 'rating': '평점순', 'recent': '최신순'};
 
@@ -102,18 +100,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 if (list.isEmpty) {
                   return const Center(child: Text('조건에 맞는 작품이 없어요'));
                 }
-                return GridView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.52,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                  ),
-                  itemCount: list.length,
-                  itemBuilder: (context, i) => _GridCard(item: list[i]),
-                );
+                return ContentGrid(items: list, controller: _scroll);
               },
             ),
           ),
@@ -159,66 +146,6 @@ class _GenreBar extends StatelessWidget {
                 onSelected: (_) => onSelect(genre),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GridCard extends StatelessWidget {
-  const _GridCard({required this.item});
-
-  final Content item;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => DetailScreen(id: item.id))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (item.imageUrl == null)
-                    ColoredBox(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                    )
-                  else
-                    Image.network(
-                      item.imageUrl!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      errorBuilder: (context, _, _) => ColoredBox(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                      ),
-                    ),
-                  if (item.externalRating != null)
-                    Positioned(
-                      left: 4,
-                      bottom: 4,
-                      child: RatingBadge(rating: item.externalRating!),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            item.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
         ],
       ),
     );

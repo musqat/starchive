@@ -9,6 +9,7 @@ import '../providers/content_provider.dart';
 import '../widgets/content_row.dart';
 import 'login_screen.dart';
 import 'browse_screen.dart';
+import 'library_screen.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -30,6 +31,14 @@ class HomeScreen extends ConsumerWidget {
             icon: const Icon(Icons.search),
             tooltip: '검색',
           ),
+          if (user != null)
+            IconButton(
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const LibraryScreen())),
+              icon: const Icon(Icons.bookmark_border),
+              tooltip: '보관함',
+            ),
           if (user == null)
             TextButton(
               onPressed: () => Navigator.of(

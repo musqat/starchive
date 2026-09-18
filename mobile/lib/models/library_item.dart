@@ -7,6 +7,7 @@ class LibraryItem {
     required this.status,
     required this.liked,
     required this.recommended,
+    required this.memoPublic,
     this.rating,
     this.memo,
   });
@@ -15,12 +16,19 @@ class LibraryItem {
   final String status; // WISH / DOING / DONE
   final bool liked;
   final bool recommended;
+  final bool memoPublic;
   final double? rating;
   final String? memo;
 
   factory LibraryItem.fromJson(Map<String, dynamic> json) {
-    // TODO: content 는 중첩 맵이다
-    //       rating 은 num? 뒤 toDouble(), liked·recommended 는 bool
-    throw UnimplementedError();
+    return LibraryItem(
+      content: Content.fromJson(json['content'] as Map<String, dynamic>),
+      status: json['status'] as String,
+      liked: json['liked'] as bool? ?? false,
+      recommended: json['recommended'] as bool? ?? false,
+      memoPublic: json['memo_public'] as bool? ?? false,
+      rating: (json['rating'] as num?)?.toDouble(),
+      memo: json['memo'] as String?,
+    );
   }
 }
