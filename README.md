@@ -9,6 +9,8 @@
 
 ![홈 — 취향 추천과 인기 목록](docs/홈화면.png)
 
+앱 화면은 [mobile/README.md](mobile/README.md) 에 모아 뒀다.
+
 로컬 실행·수집·배포는 [개발 문서](docs/DEVELOPMENT.md). 상수를 재보며 뒤집은 기록은
 [시행착오](docs/trial-and-error.md), 설계대로 안 돌아간 것은 [문제 해결](docs/problem-solving.md).
 
