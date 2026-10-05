@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// 서명 키 정보. 저장소에 없고 CI 가 비밀값으로 만든다
+val keyProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
 }
 
 android {
@@ -25,11 +33,23 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = keyProperties.getProperty("storeFile")?.let { file(it) }
+            storePassword = keyProperties.getProperty("storePassword")
+            keyAlias = keyProperties.getProperty("keyAlias")
+            keyPassword = keyProperties.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // 키가 없는 자리에서도 빌드는 되게 디버그 키로 떨어뜨린다
+            signingConfig = if (keyProperties.isEmpty) {
+                signingConfigs.getByName("debug")
+            } else {
+                signingConfigs.getByName("release")
+            }
         }
     }
 }
