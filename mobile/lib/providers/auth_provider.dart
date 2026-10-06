@@ -49,7 +49,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     await login(email, password);
   }
 
-  /// 바꾸면 서버가 token_version 을 올려 지금 토큰이 죽는다
+  /// 바꾸면 서버가 token_version 을 올려 지금 토큰이 무효가 된다
   Future<void> changePassword(String current, String next) async {
     final email = state.value?.email;
     if (email == null) return;
