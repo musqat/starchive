@@ -39,7 +39,7 @@ class BrowseFilter {
     );
   }
 
-  /// provider 를 구분하는 키. 필드가 하나라도 다르면 다른 값이어야 한다
+  /// provider 를 구분하는 키. 필드가 하나라도 다르면 다른 값이다
   @override
   bool operator ==(Object other) =>
       other is BrowseFilter &&

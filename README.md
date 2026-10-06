@@ -203,7 +203,7 @@ DB 가 죽어도 잡힌다.
 
 ## 테스트
 
-백엔드 **166 개**, E2E **46 개**.
+백엔드 **166 개**, E2E **46 개**, 앱 **28 개**.
 
 | 영역 | 테스트 |
 |---|---|
@@ -213,8 +213,9 @@ DB 가 죽어도 잡힌다.
 | 수집 정규화 | 14 |
 | 헬스·보안 헤더 | 4 |
 | E2E (Playwright) | 46 |
+| 앱 (flutter test) | 28 |
 
-CI 는 PR 마다 `ruff` · `pytest` · 배포 의존성 검증 · `build` · `typecheck` · `lint` 를 돌린다.
+CI 는 PR 마다 `ruff` · `pytest` · 배포 의존성 검증 · `build` · `typecheck` · `lint` · `flutter analyze` · `flutter test` 를 돌린다.
 
 <details>
 <summary><b>CI 범위와 이유</b></summary>
