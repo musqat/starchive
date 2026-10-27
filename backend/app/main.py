@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
@@ -60,3 +60,9 @@ def health(db: Session = Depends(get_db)):
     except SQLAlchemyError:
         return JSONResponse({"status": "db unreachable"}, status_code=503)
     return {"status": "ok"}
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    """API 문서로 보내기"""
+    return RedirectResponse("/docs")

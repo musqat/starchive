@@ -42,3 +42,9 @@ def test_security_headers(client):
 def test_cors_header(client):
     r = client.get("/contents?size=1", headers={"Origin": "http://localhost:3000"})
     assert r.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
+def test_root_redirects_to_docs(client):
+    res = client.get("/", follow_redirects=False)
+    assert res.status_code == 307
+    assert res.headers["location"] == "/docs"
