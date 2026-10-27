@@ -30,6 +30,7 @@ def test_profile_none_without_records(db_session, credentials):
 
 
 @pytest.mark.db  # 시드는 평점이 많아 프로필 벡터가 만들어진다
+@pytest.mark.catalog
 def test_profile_from_seed(db_session):
     user = seed_user(db_session)
 
@@ -40,6 +41,7 @@ def test_profile_from_seed(db_session):
 
 
 @pytest.mark.db  # 후보는 내가 이미 기록한 것을 빼고 나온다
+@pytest.mark.catalog
 def test_candidates_exclude_recorded(db_session):
     user = seed_user(db_session)
 
@@ -59,6 +61,7 @@ def test_candidates_exclude_recorded(db_session):
 
 
 @pytest.mark.db  # 점수는 두 신호의 가중합
+@pytest.mark.catalog
 def test_candidate_score_is_weighted_sum(db_session):
     user = seed_user(db_session)
 
@@ -71,6 +74,7 @@ def test_candidate_score_is_weighted_sum(db_session):
 
 
 @pytest.mark.db  # type 을 주면 그 타입만 나온다
+@pytest.mark.catalog
 def test_candidates_filter_type(db_session):
     user = seed_user(db_session)
 
@@ -81,6 +85,7 @@ def test_candidates_filter_type(db_session):
 
 
 @pytest.mark.db  # only_ids 를 주면 그 안에서만 고른다. 카탈로그가 늘어도 평가가 안 흔들린다
+@pytest.mark.catalog
 def test_candidates_restricted_to_only_ids(db_session):
     user = seed_user(db_session)
     full = candidates.generate(db_session, user.id, ContentType.MOVIE)
@@ -93,6 +98,7 @@ def test_candidates_restricted_to_only_ids(db_session):
 
 
 @pytest.mark.db  # 책은 내용 점수로만 줄을 선다. 가중치가 전역 0 이면 순서가 무작위가 된다
+@pytest.mark.catalog
 def test_book_candidates_ranked_by_content(db_session, client, credentials):
     client.post("/auth/signup", json=credentials)
     user = db_session.scalar(select(User).where(User.email == credentials["email"]))
@@ -110,6 +116,7 @@ def test_book_candidates_ranked_by_content(db_session, client, credentials):
 
 
 @pytest.mark.db  # 상위 하나만 뽑으면 모두가 같은 신작을 받는다. 상위 N 에서 무작위로 뽑는다
+@pytest.mark.catalog
 def test_recent_picks_vary_between_users(db_session):
     import random
 

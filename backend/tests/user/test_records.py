@@ -5,6 +5,7 @@ BOOK = "aladin_9788937460586"  # 싯다르타
 
 
 @pytest.mark.db  # 기록 생성 → 200
+@pytest.mark.catalog
 def test_upsert_creates(auth_client):
     r = auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
 
@@ -16,6 +17,7 @@ def test_upsert_creates(auth_client):
 
 
 @pytest.mark.db  # recommended=true → status 도 DONE
+@pytest.mark.catalog
 def test_recommend_forces_done(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
     r = auth_client.put(f"/me/records/{MOVIE}", json={"recommended": True})
@@ -25,6 +27,7 @@ def test_recommend_forces_done(auth_client):
 
 
 @pytest.mark.db  # 보내지 않은 필드는 유지
+@pytest.mark.catalog
 def test_partial_update(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
     r = auth_client.put(f"/me/records/{MOVIE}", json={"recommended": False})
@@ -34,6 +37,7 @@ def test_partial_update(auth_client):
 
 
 @pytest.mark.db  # 추천이 켜져 있으면 status 를 WISH 로 되돌릴 수 없음
+@pytest.mark.catalog
 def test_status_locked_while_recommended(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"recommended": True})
     r = auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
@@ -53,6 +57,7 @@ def test_unknown_content(auth_client):
 
 
 @pytest.mark.db  # status·type 으로 걸러짐
+@pytest.mark.catalog
 def test_library_filters(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"status": "WISH"})
     auth_client.put(f"/me/records/{BOOK}", json={"status": "DONE"})
@@ -74,6 +79,7 @@ def test_requires_login(client):
 
 
 @pytest.mark.db  # 평점을 매기면 status 도 DONE
+@pytest.mark.catalog
 def test_rating_forces_done(auth_client):
     r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": 4})
 
@@ -82,6 +88,7 @@ def test_rating_forces_done(auth_client):
 
 
 @pytest.mark.db  # rating 과 recommended 는 독립
+@pytest.mark.catalog
 def test_rating_and_recommended_independent(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"rating": 5, "recommended": True})
     r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": 2})
@@ -91,6 +98,7 @@ def test_rating_and_recommended_independent(auth_client):
 
 
 @pytest.mark.db  # null 을 보내면 평점이 지워짐
+@pytest.mark.catalog
 def test_rating_cleared_by_null(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"rating": 3})
     r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": None})
@@ -106,6 +114,7 @@ def test_rating_out_of_range(auth_client, value):
 
 
 @pytest.mark.db  # 상세에 my_rating 이 붙음
+@pytest.mark.catalog
 def test_my_rating_attached(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"rating": 4})
 
@@ -113,6 +122,7 @@ def test_my_rating_attached(auth_client):
 
 
 @pytest.mark.db  # 좋아요를 켜면 status 도 DONE
+@pytest.mark.catalog
 def test_liked_forces_done(auth_client):
     r = auth_client.put(f"/me/records/{MOVIE}", json={"liked": True})
 
@@ -121,6 +131,7 @@ def test_liked_forces_done(auth_client):
 
 
 @pytest.mark.db  # 좋아요·평점·추천은 서로 독립
+@pytest.mark.catalog
 def test_liked_independent(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"liked": True, "recommended": True, "rating": 5})
     r = auth_client.put(f"/me/records/{MOVIE}", json={"liked": False})
@@ -132,6 +143,7 @@ def test_liked_independent(auth_client):
 
 
 @pytest.mark.db  # 상세에 my_liked 가 붙음
+@pytest.mark.catalog
 def test_my_liked_attached(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"liked": True})
 
@@ -139,6 +151,7 @@ def test_my_liked_attached(auth_client):
 
 
 @pytest.mark.db  # 보관함을 liked·recommended 로 거름
+@pytest.mark.catalog
 def test_library_filters_by_signal(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"liked": True})
     auth_client.put(f"/me/records/{BOOK}", json={"recommended": True})
@@ -151,6 +164,7 @@ def test_library_filters_by_signal(auth_client):
 
 
 @pytest.mark.db  # 0.5 단위 평점
+@pytest.mark.catalog
 def test_rating_half_step(auth_client):
     r = auth_client.put(f"/me/records/{MOVIE}", json={"rating": 3.5})
 

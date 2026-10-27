@@ -2,6 +2,7 @@ import pytest
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_list(client):
     r = client.get("/contents?size=5")
 
@@ -14,6 +15,7 @@ def test_list(client):
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_search(client):
     r = client.get("/contents", params={"q": "반지의", "size": 5})
 
@@ -25,6 +27,7 @@ def test_search(client):
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_filter_by_type(client):
     movies = client.get("/contents", params={"type": "MOVIE", "size": 3}).json()
     books = client.get("/contents", params={"type": "BOOK", "size": 3}).json()
@@ -38,6 +41,7 @@ def test_filter_by_type(client):
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_detail(client):
     r = client.get("/contents/tmdb_278")
 
@@ -65,6 +69,7 @@ def test_query_validation(client, params):
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_genres(client):
     movie = client.get("/contents/genres", params={"type": "MOVIE"}).json()
     book = client.get("/contents/genres", params={"type": "BOOK"}).json()
@@ -77,6 +82,7 @@ def test_genres(client):
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_genre_filter(client):
     r = client.get("/contents", params={"type": "MOVIE", "genre": "SF", "size": 5})
 
@@ -86,6 +92,7 @@ def test_genre_filter(client):
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_sort_rating_excludes_low_vote_count(client):
     rated = client.get("/contents", params={"type": "MOVIE", "sort": "rating"}).json()
     everything = client.get("/contents", params={"type": "MOVIE"}).json()
@@ -95,6 +102,7 @@ def test_sort_rating_excludes_low_vote_count(client):
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_sort_rating_order(client):
     """external_rating 은 응답에 있어 순서를 직접 확인 가능"""
 
@@ -113,6 +121,7 @@ def test_sort_rating_order(client):
 
 @pytest.mark.db
 @pytest.mark.parametrize("sort", ["popular", "recent"])
+@pytest.mark.catalog
 def test_sort_order_flips(client, sort):
     """정렬 기준값이 응답에 없어서 첫 항목이 바뀌는지만 확인"""
 
@@ -134,6 +143,7 @@ def test_search_empty(client):
 
 
 @pytest.mark.db  # 비로그인은 내 기록이 비어 있음
+@pytest.mark.catalog
 def test_my_status_anonymous(client):
     item = client.get("/contents?size=1").json()["items"][0]
 
@@ -142,6 +152,7 @@ def test_my_status_anonymous(client):
 
 
 @pytest.mark.db  # 로그인하면 목록과 상세에 내 기록이 붙음
+@pytest.mark.catalog
 def test_my_status_attached(auth_client):
     auth_client.put("/me/records/tmdb_157336", json={"recommended": True})
 
@@ -154,6 +165,7 @@ def test_my_status_attached(auth_client):
 
 
 @pytest.mark.db  # 기록이 없는 항목은 기본값
+@pytest.mark.catalog
 def test_my_status_absent(auth_client):
     item = auth_client.get("/contents/tmdb_27205").json()
 
@@ -162,6 +174,7 @@ def test_my_status_absent(auth_client):
 
 
 @pytest.mark.db  # unseen=1 은 내가 기록한 항목을 뺌
+@pytest.mark.catalog
 def test_unseen_excludes_recorded(auth_client):
     before = auth_client.get("/contents", params={"q": "인터스텔라"}).json()
     auth_client.put("/me/records/tmdb_157336", json={"status": "DONE"})

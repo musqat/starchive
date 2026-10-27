@@ -6,6 +6,7 @@ PASSWORD = "secret1234"
 
 
 @pytest.mark.db  # 메모를 남기면 status 도 DONE
+@pytest.mark.catalog
 def test_memo_forces_done(auth_client):
     r = auth_client.put(f"/me/records/{MOVIE}", json={"memo": "좋았다"})
 
@@ -15,6 +16,7 @@ def test_memo_forces_done(auth_client):
 
 
 @pytest.mark.db  # 빈 문자열을 보내면 지워짐
+@pytest.mark.catalog
 def test_memo_cleared(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"memo": "좋았다"})
     r = auth_client.put(f"/me/records/{MOVIE}", json={"memo": ""})
@@ -29,6 +31,7 @@ def test_memo_too_long(auth_client):
 
 
 @pytest.mark.db  # 상세에 my_memo 가 붙음
+@pytest.mark.catalog
 def test_my_memo_attached(auth_client):
     auth_client.put(f"/me/records/{MOVIE}", json={"memo": "내 메모", "memo_public": True})
 
@@ -46,6 +49,7 @@ def test_private_memo_hidden(auth_client, client):
 
 
 @pytest.mark.db  # 공개 메모는 닉네임과 함께 나오고, 내 것은 빠진다
+@pytest.mark.catalog
 def test_public_memo_visible_to_others(auth_client, credentials):
     auth_client.put(
         f"/me/records/{MOVIE}", json={"memo": "공개함", "memo_public": True, "rating": 4}
@@ -62,6 +66,7 @@ def test_public_memo_visible_to_others(auth_client, credentials):
 
 
 @pytest.mark.db  # has_memo 로 메모 남긴 것만 거름
+@pytest.mark.catalog
 def test_library_filters_by_memo(auth_client):
     BOOK = "aladin_9788937460586"
     auth_client.put(f"/me/records/{MOVIE}", json={"memo": "남김"})

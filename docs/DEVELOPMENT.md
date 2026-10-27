@@ -125,18 +125,20 @@ uv run python -m scripts.evaluate_rerank           # 재랭킹 전후 · 사용�
 ```bash
 cd backend
 uv run pytest -q -m "not db and not external"    # 빠른 것만
+uv run pytest -q -m "not catalog and not external"  # CI 와 같음
 uv run pytest -q                                  # 전체
 ```
 
 | 마커 | 필요한 것 |
 |---|---|
 | — | 없음 |
-| `db` | DB 연결. `docker compose up -d` 면 된다 |
+| `db` | DB 연결. `docker compose up -d` 뒤 마이그레이션까지면 된다 |
+| `catalog` | 수집한 작품 데이터. [수집 스크립트](#수집-스크립트)를 돌린 DB |
 | `external` | TMDB · 알라딘 API |
 
 **배포 의존성** — Vercel 은 `[project].dependencies` 만 설치한다. `app/` 이 `dev`·`etl` 그룹의
 패키지를 쓰면 로컬 테스트는 통과하고 배포만 죽는다. 실제로 한 번 죽었다. 재시도 라이브러리가
-`etl` 그룹에 있었는데 재랭킹이 쓰기 시작하면서 런타임 의존이 됐고, 테스트 133개는 전부 통과했다.
+`etl` 그룹에 있었는데 재랭킹이 쓰기 시작하면서 런타임 의존이 됐고, 그때 테스트 133개는 전부 통과했다.
 
 ```bash
 cd backend
