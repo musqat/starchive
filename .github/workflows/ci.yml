@@ -11,9 +11,23 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    # 설정을 import 시점에 읽는다. DB 를 안 쓰는 테스트도 값이 있어야 뜬다
+    # 빈 DB. 마이그레이션만 올리고 작품 데이터는 없음
+    services:
+      db:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: starchive
+          POSTGRES_PASSWORD: starchive
+          POSTGRES_DB: starchive
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U starchive"
+          --health-interval 5s
+          --health-retries 10
     env:
-      DATABASE_URL: postgresql+psycopg://x:x@localhost:5432/x
+      DATABASE_URL: postgresql+psycopg://starchive:starchive@localhost:5432/starchive
+      DIRECT_URL: postgresql+psycopg://starchive:starchive@localhost:5432/starchive
       JWT_SECRET: ci-only-not-a-secret
     steps:
       - uses: actions/checkout@v7
@@ -27,9 +41,12 @@ jobs:
       - name: 린트
         run: uv run ruff check .
 
-      # DB·외부 API 없이 도는 것만
+      - name: 마이그레이션
+        run: uv run alembic upgrade head
+
+      # 작품 데이터·외부 API 가 필요한 것만 뺌
       - name: 테스트
-        run: uv run pytest -q -m "not db and not external"
+        run: uv run pytest -q -m "not catalog and not external"
 
       # Vercel 은 [project].dependencies 만 설치한다.
       # app/ 이 dev·etl 그룹 패키지를 쓰면 여기서 걸린다

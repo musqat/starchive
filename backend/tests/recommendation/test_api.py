@@ -86,6 +86,7 @@ def test_empty_without_batch(auth_client):
 
 
 @pytest.mark.db  # 저장된 배치를 순위대로 낸다
+@pytest.mark.catalog
 def test_returns_stored_batch(auth_client, db_session, credentials, movies):
     user = db_session.scalar(select(User).where(User.email == credentials["email"]))
     stored_batch(db_session, user.id, movies)
@@ -121,6 +122,7 @@ def test_rated_count(auth_client, db_session, credentials, movies):
 
 
 @pytest.mark.db  # 쿨다운 중에는 429 와 Retry-After
+@pytest.mark.catalog
 def test_refresh_cooldown(auth_client, db_session, credentials, movies):
     user = db_session.scalar(select(User).where(User.email == credentials["email"]))
     rate_all(db_session, user.id, movies)
@@ -177,6 +179,7 @@ def test_cron_ignores_users_without_batch(db_session, credentials, client):
 
 
 @pytest.mark.db  # 한 명이 실패해도 나머지는 갱신된다
+@pytest.mark.catalog
 def test_cron_isolates_failure(client, db_session, movies, monkeypatch):
     monkeypatch.setattr(settings, "CRON_SECRET", "cron-test-secret")
     stale_minutes = (settings.CRON_STALE_HOURS + 1) * 60

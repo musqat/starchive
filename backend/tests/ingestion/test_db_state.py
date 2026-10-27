@@ -13,6 +13,7 @@ def conn():
 
 
 @pytest.mark.db
+@pytest.mark.catalog
 def test_counts_by_type(conn):
     counts = dict(conn.execute(text("select type, count(*) from contents group by type")).all())
 

@@ -59,6 +59,7 @@ def stub(monkeypatch, movies):
 
 
 @pytest.mark.db  # 배치를 만들면 포인터가 그 배치를 가리킨다
+@pytest.mark.catalog
 async def test_refresh_sets_pointer(db_session, user, stub):
     batch_id = await pipeline.refresh(db_session, None, user.id)
 
@@ -73,6 +74,7 @@ async def test_refresh_sets_pointer(db_session, user, stub):
 
 
 @pytest.mark.db  # 후보가 없는 매체는 건너뛴다
+@pytest.mark.catalog
 async def test_skips_type_without_candidates(db_session, user, stub):
     await pipeline.refresh(db_session, None, user.id)
 
@@ -81,6 +83,7 @@ async def test_skips_type_without_candidates(db_session, user, stub):
 
 
 @pytest.mark.db  # 두 번 돌리면 옛 배치는 남고 포인터만 새것을 가리킨다
+@pytest.mark.catalog
 async def test_refresh_keeps_previous_but_moves_pointer(db_session, user, stub):
     first = await pipeline.refresh(db_session, None, user.id)
     second = await pipeline.refresh(db_session, None, user.id)
@@ -119,6 +122,7 @@ async def test_template_reason_saved(db_session, user, stub):
 
 
 @pytest.mark.db  # 취향 요약은 높게 평가한 것부터
+@pytest.mark.catalog
 def test_liked_titles_order(db_session, user, movies):
     db_session.add_all(
         [
@@ -142,6 +146,7 @@ def test_liked_titles_order(db_session, user, movies):
 
 
 @pytest.mark.db  # 배치 안에 같은 작품이 두 번 들어갈 수 없다
+@pytest.mark.catalog
 async def test_duplicate_content_in_batch_rejected(db_session, user, movies):
     from sqlalchemy.exc import IntegrityError
 

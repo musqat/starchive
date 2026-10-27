@@ -96,6 +96,7 @@ def test_search_limit_keyed_by_user_with_bearer(client, credentials, monkeypatch
 
 
 @pytest.mark.db  # 벡터로 자기 자신을 검색하면 상위에 나온다
+@pytest.mark.catalog
 def test_search_semantic_ranks_self(client, monkeypatch, no_comment):
     row = _first_movie()
 
@@ -111,6 +112,7 @@ def test_search_semantic_ranks_self(client, monkeypatch, no_comment):
 
 
 @pytest.mark.db  # 제목 정확 매칭은 임베딩 없이도 된다
+@pytest.mark.catalog
 def test_search_exact_title_without_embedding(client, monkeypatch, no_comment):
     async def no_vector(query):
         return None
@@ -124,6 +126,7 @@ def test_search_exact_title_without_embedding(client, monkeypatch, no_comment):
 
 
 @pytest.mark.db  # 정확 매칭이 있으면 검색어 대신 그 작품의 임베딩으로 이웃을 찾는다. OpenAI 없이
+@pytest.mark.catalog
 def test_exact_match_uses_content_embedding_for_neighbors(client, monkeypatch, no_comment):
     async def must_not_embed(query):
         raise AssertionError("정확 매칭이 있는데 검색어를 임베딩했다")
@@ -156,6 +159,7 @@ def test_search_no_match_returns_empty(client, monkeypatch, no_comment):
 
 
 @pytest.mark.db  # 제목 정확 매칭이면 코멘트를 안 만든다
+@pytest.mark.catalog
 def test_exact_match_skips_comment(client, monkeypatch):
     async def no_vector(query):
         return None

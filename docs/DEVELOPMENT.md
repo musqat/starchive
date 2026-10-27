@@ -125,13 +125,15 @@ uv run python -m scripts.evaluate_rerank           # 재랭킹 전후 · 사용�
 ```bash
 cd backend
 uv run pytest -q -m "not db and not external"    # 빠른 것만
+uv run pytest -q -m "not catalog and not external"  # CI 와 같음
 uv run pytest -q                                  # 전체
 ```
 
 | 마커 | 필요한 것 |
 |---|---|
 | — | 없음 |
-| `db` | DB 연결. `docker compose up -d` 면 된다 |
+| `db` | DB 연결. `docker compose up -d` 뒤 마이그레이션까지면 된다 |
+| `catalog` | 수집한 작품 데이터. [수집 스크립트](#수집-스크립트)를 돌린 DB |
 | `external` | TMDB · 알라딘 API |
 
 **배포 의존성** — Vercel 은 `[project].dependencies` 만 설치한다. `app/` 이 `dev`·`etl` 그룹의
